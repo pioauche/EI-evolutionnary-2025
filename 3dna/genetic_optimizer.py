@@ -13,6 +13,7 @@ class GeneticOptimizer:
         self.best_fitness = float('inf')
         self.best_solution = None
         self.trajectoire = Traj3D()
+        self.pair= 16
     def load_table(self, filename="table.json"):
         # Get the directory where this script is located
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -60,14 +61,16 @@ class GeneticOptimizer:
     def crossover(self, parent1, parent2, type=2):
         """Create a child by combining two parents"""
         child = copy.deepcopy(parent1)
-        crossover_model = self.__generate_random_tuple(type-1, child.pair)
-        dinucleotides = list(child.getTable().keys())
+        child.calculate(False)
+        table = child.getTable()
+        crossover_model = self.__generate_random_tuple(type-1, self.pair)
+        dinucleotides = list(table.keys())
         index = 0
         for i,e in enumerate(crossover_model):
             if np.random.random() < 0.5:
                 while index < e:
                     dinucleotide = dinucleotides[index]
-                    child[dinucleotide] = copy.deepcopy(parent2[dinucleotide])
+                    table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
                     index += 1
             index = e
         return child
@@ -97,15 +100,22 @@ class GeneticOptimizer:
                 while parent1 == parent2:
                     parent1 = parents[np.random.randint(0,len(parents))]
                     parent2 = parents[np.random.randint(0,len(parents))]
-                parents.append(self.crossover(parent1.getTable(), parent2.getTable()))
+                parents.append(self.crossover(parent1, parent2))
             while len(parents) != self.population_size:
                 parents.pop()
         return parents
     def optimize(self, sequence, generations=100):
         """Run the genetic algorithm"""
         # Initialize population
-        population = [self.create_individual() for _ in range(self.population_size)]
-        
+        population = []
+        population.append(Individual())
+        for i in range(self.population_size-1):
+            temp = Individual()
+            for dinucleotide in temp.getTable():
+                temp.addTwist(dinucleotide,np.random.randint(-20,21))
+                temp.addWedge(dinucleotide,np.random.randint(-5,6))
+                temp.addDirection(dinucleotide,np.random.randint(-30,31))
+            population.append(temp)
         for gen in range(generations):
             # Evaluate fitness for each individual
             best_idx = float('inf')
@@ -113,6 +123,7 @@ class GeneticOptimizer:
                 if not individual.isCalculated():
                     fitness = self.calculate_fitness(individual.getTable(), sequence)
                     individual.setFitness(fitness)
+                    individual.calculate(True)
                 if individual.getFitness() < best_idx:
                     best_idx = individual.getFitness()
                     id = i
