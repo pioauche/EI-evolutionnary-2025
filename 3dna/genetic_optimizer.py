@@ -90,11 +90,30 @@ class GeneticOptimizer:
     def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
         """Create a new generation of individuals based on the current population"""
         parents = []
+        if type_choosing_parent == "selestion par roulette":
+            parents = []
+            liste=[x.getFitness() for x in population]
+
+
+            poids_temp = liste[:]  # Copie temporaire des poids
+            for _ in range(self.population_size//2):
+                total = sum(poids_temp)
+                if total == 0:
+                    raise ValueError("Impossible de tirer plus d'indices : les poids sont épuisés.")
+                
+                seuil = random.uniform(0, total)
+                cumul = 0
+                for i, poids in enumerate(poids_temp):
+                    cumul += poids
+                    if seuil <= cumul:
+                        parents.append(population[i])  # Ajouter l'indice tiré
+                        poids_temp[i] = 0  # Réduire le poids à zéro (sans retour)
+                        break
         if type_choosing_parent == "best":
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:self.population_size//2]
-            child=copy.deepcopy(parents)
+        child=copy.deepcopy(parents)
         if type_matching == "random":
             for i in range(self.population_size//2):
                 parent1 = parents[np.random.randint(0,len(parents))]
