@@ -5,6 +5,7 @@ import os
 from .Traj3D import Traj3D
 from .RotTable import RotTable
 from .Individual import Individual
+
 class GeneticOptimizer:
     def __init__(self, population_size=50, mutation_rate=0.1):
         self.population_size = population_size
@@ -28,14 +29,7 @@ class GeneticOptimizer:
         """Create a mutated version of the original table"""
         new_table = Individual()
         # Mutate angles in the table
-        table = new_table.getTable()
-        for key in table:
-            if np.random.random() < self.mutation_rate:
-                new_table.addTwist(key, np.random.normal(-5, 5))  # Add random variation
-            if np.random.random() < self.mutation_rate:
-                new_table.addWedge(key, np.random.normal(-5, 5))  # Add random variation
-            if np.random.random() < self.mutation_rate:
-                new_table.addDirection(key, np.random.normal(-5, 5))  # Add random variation
+        self.mutate(new_table)
         return new_table
     
     def calculate_fitness(self, ind, sequence):
@@ -63,29 +57,37 @@ class GeneticOptimizer:
         # Combine metrics (we want to minimize both)
         return end_to_start + a*norm
     
-    def crossover(self, parent1, parent2):
+    def crossover(self, parent1, parent2, type=2):
         """Create a child by combining two parents"""
-        child = Individual()
-        child.table = {}
-        
-        for key in parent1:
+        child = copy.deepcopy(parent1)
+        crossover_model = self.__generate_random_tuple(type-1, child.pair)
+        dinucleotides = list(child.getTable().keys())
+        index = 0
+        for i,e in enumerate(crossover_model):
             if np.random.random() < 0.5:
-                child.table[key] = copy.deepcopy(parent1[key])
-            else:
-                child.table[key] = copy.deepcopy(parent2[key])
+                while index < e:
+                    dinucleotide = dinucleotides[index]
+                    child[dinucleotide] = copy.deepcopy(parent2[dinucleotide])
+                    index += 1
+            index = e
         return child
     
-    def mutate(self, individual):
+    def mutate(self, individual:RotTable):
         """Apply random mutations to an individual"""
-        for key in individual.table:
-            for i in [0, 1, 2]:  # Only mutate angle values
-                if np.random.random() < self.mutation_rate:
-                    individual.table[key][i] += np.random.normal(0, 5)
+        for dinucleotide in individual.rot_table:
+            if np.random.random() < self.mutation_rate:
+                individual.setTwist(dinucleotide, np.random.normal(0, 5))
+            if np.random.random() < self.mutation_rate:
+                individual.setWedge(dinucleotide, np.random.normal(0, 5))
+            if np.random.random() < self.mutation_rate:
+                individual.setDirection(dinucleotide, np.random.normal(0, 5))
         return individual
-    def create_new_gen(self,population,type_choosing_parent="best",type_matching="random"):
+
+    def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
+        """Create a new generation of individuals based on the current population"""
         parents = []
         if type_choosing_parent == "best":
-            parents= copy.deepcopy(population)
+            parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:self.population_size//2]
         if type_matching == "random":

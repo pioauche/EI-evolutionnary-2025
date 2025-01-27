@@ -13,6 +13,7 @@ class RotTable:
         if filename is None:
             filename = os_path.join(here, 'table.json')
         self.rot_table = json_load(open(filename))
+        
     ###################
     # WRITING METHODS #
     ###################
