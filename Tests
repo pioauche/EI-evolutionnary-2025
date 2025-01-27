@@ -1,0 +1,136 @@
+import numpy as np
+import json
+import copy
+import os
+
+class Tests : 
+    import numpy as np
+
+    def test_calculate_fitness():
+        class MockRotTable:
+            def getTable(self):
+                # Tableau factice pour simplifier les tests
+                return {
+                    'A': (0.0, 0.0, 1.0),
+                    'B': (1.0, 0.0, 0.0),
+                    'C': (0.0, 1.0, 0.0)
+                }
+
+        class MockTraj3D:
+            def compute(self, sequence, rot_table):
+                # Mock pour simplifier les tests, ignore les séquences
+                pass
+
+            def getTraj(self):
+                # Retourne une trajectoire fermée simple pour les tests
+                return [(0, 0, 0), (1, 1, 1), (0, 0, 0)]
+
+        # Création de l'individu factice
+        ind = {
+            'A': (0.1, 0.1, 1.1),
+            'B': (0.9, 0.1, -0.1),
+            'C': (-0.1, 0.9, 0.1)
+        }
+
+        # Séquence factice
+        sequence = ['A', 'B', 'C', 'A']
+
+        # Mock de la fonction calculate_fitness
+        class FitnessTest:
+            def calculate_fitness(self, ind, sequence):
+                """Calcule la fitness avec des éléments mockés"""
+                a = 1  # Poids
+                rot_table = MockRotTable()
+                table = rot_table.getTable()
+                traj = MockTraj3D()
+                traj.compute(sequence, rot_table)
+                
+                coords = traj.getTraj()
+                start = np.array(coords[0])
+                end = np.array(coords[-1])
+                end_to_start = np.linalg.norm(end - start)
+
+                norm = 0
+                for cle in ind:
+                    norm += (ind[cle][0] - table[cle][0])**2 + \
+                            (ind[cle][1] - table[cle][1])**2 + \
+                            (ind[cle][2] - table[cle][2])**2
+                norm = np.sqrt(norm) / len(table)
+                
+                return end_to_start + a * norm
+
+        # Instanciation et appel de la fonction
+        fitness_calc = FitnessTest()
+        fitness_value = fitness_calc.calculate_fitness(ind, sequence)
+
+        # Vérification des résultats
+        assert fitness_value > 0, "La valeur de fitness doit être positive."
+        print(f"Test réussi, valeur calculée de fitness : {fitness_value:.4f}")
+
+    def test_crossover():
+        # Mock des objets nécessaires
+        class MockChild:
+            def __init__(self, pair):
+                self.pair = pair
+                self.table = {"AA": (0.1, 0.1, 1.1), "AT": (0.9, 0.1, -0.1), "TA": (-0.1, 0.9, 0.1)}
+
+            def getTable(self):
+                return self.table
+
+            def __setitem__(self, key, value):
+                self.table[key] = value
+
+            def __getitem__(self, key):
+                return self.table[key]
+
+        class MockCrossoverTest:
+            def __generate_random_tuple(self, limit, pair):
+                """Génère des points de crossover"""
+                return sorted(np.random.choice(range(len(pair)), limit, replace=False))
+            
+            def crossover(self, parent1, parent2, type=2):
+                child = copy.deepcopy(parent1)
+                crossover_model = self.__generate_random_tuple(type - 1, child.pair)
+                dinucleotides = list(child.getTable().keys())
+                index = 0
+                for i, e in enumerate(crossover_model):
+                    if np.random.random() < 0.5:
+                        while index < e:
+                            dinucleotide = dinucleotides[index]
+                            child[dinucleotide] = copy.deepcopy(parent2[dinucleotide])
+                            index += 1
+                    index = e
+                return child
+
+        # Création des parents mockés
+        parent1 = MockChild(pair=[1, 2, 3])  # Mock de séquence 1
+        parent1.table = {
+            "AA": (0.1, 0.1, 1.1),
+            "AT": (0.9, 0.1, -0.1),
+            "TA": (-0.1, 0.9, 0.1)
+        }
+
+        parent2 = MockChild(pair=[1, 2, 3])  # Mock de séquence 2
+        parent2.table = {
+            "AA": (1.0, 1.0, 1.0),
+            "AT": (0.0, 0.0, 0.0),
+            "TA": (-1.0, -1.0, -1.0)
+        }
+
+        # Instanciation et exécution du crossover
+        crossover_test = MockCrossoverTest()
+        child = crossover_test.crossover(parent1, parent2, type=2)
+
+        # Vérification des résultats
+        assert child.getTable() != parent1.getTable(), "L'enfant ne doit pas être identique au parent1"
+        assert child.getTable() != parent2.getTable(), "L'enfant ne doit pas être identique au parent2"
+        assert len(child.getTable()) == len(parent1.getTable()), "L'enfant doit avoir autant d'éléments que ses parents"
+
+        print("Test réussi, enfant généré avec succès.")
+        print("Génome parent1 :", parent1.getTable())
+        print("Génome parent2 :", parent2.getTable())
+        print("Génome enfant :", child.getTable())
+
+    # Appel du test
+    test_crossover()
+
