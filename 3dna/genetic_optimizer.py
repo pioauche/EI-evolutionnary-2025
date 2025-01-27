@@ -46,7 +46,7 @@ class GeneticOptimizer:
         radius_variance = np.var(radii)
         
         # Combine metrics (we want to minimize both)
-        return end_to_start + radius_variance
+        return end_to_start
     
     def crossover(self, parent1, parent2):
         """Create a child by combining two parents"""
