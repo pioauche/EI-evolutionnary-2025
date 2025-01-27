@@ -138,3 +138,11 @@ class GeneticOptimizer:
                 separators=(',', ': ')  # Ajoute des espaces après les deux-points
             )
 
+    def __generate_random_tuple(self, n, N):
+        """Generates a list of indexes to be used for crossover of two parents"""
+        if n > N:
+            raise ValueError(f"n must be less than or equal to {N-1}")
+        random_numbers = np.random.choice(np.arange(1, N-1), n, replace=False)
+        random_numbers.sort()
+        random_numbers = list(random_numbers)
+        return random_numbers+[N] if random_numbers[-1] != N else random_numbers
