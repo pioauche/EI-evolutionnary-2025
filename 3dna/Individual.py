@@ -15,5 +15,8 @@ class Individual(RotTable):
     def getFitness(self):
         return self.fitness
 
+    def setCalculated(self, calculated: bool):
+        self.calculated = calculated
+
     def isCalculated(self):
         return self.calculated

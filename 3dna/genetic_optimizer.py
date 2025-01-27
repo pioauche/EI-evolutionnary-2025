@@ -43,6 +43,7 @@ class GeneticOptimizer:
         a = 0 # Réduction du poids de l'écart aux angles tabulés
         rot_table = RotTable()
         table = rot_table.getTable()
+        ind_table = ind.getTable()
         
         self.trajectoire.compute(sequence, ind)
         
@@ -57,8 +58,8 @@ class GeneticOptimizer:
         
         # calcul de l'écart au angles tabulés
         norm = 0
-        for key in ind:
-            norm += (ind[key][0]-table[key][0])**2 + (ind[key][1]-table[key][1])**2 + (ind[key][2]-table[key][2])**2
+        for key in ind_table:
+            norm += (ind_table[key][0]-table[key][0])**2 + (ind_table[key][1]-table[key][1])**2 + (ind_table[key][2]-table[key][2])**2
         norm = np.sqrt(norm)/len(table)
         
         # Combine metrics (we want to minimize both)
@@ -67,7 +68,7 @@ class GeneticOptimizer:
     def crossover(self, parent1, parent2, crossover_type=2):
         """Create a child by combining two parents"""
         child = copy.deepcopy(parent1)
-        child.calculate(False)
+        child.setCalculated(False)
         table = child.getTable()
         crossover_model = self.__generate_random_tuple(crossover_type-1, self.pair)
         dinucleotides = list(table.keys())
@@ -148,7 +149,7 @@ class GeneticOptimizer:
                 if not individual.isCalculated():
                     fitness = self.calculate_fitness(individual, sequence)
                     individual.setFitness(fitness)
-                    individual.calculate(True)
+                    individual.setCalculated(True)
                 
                 if individual.getFitness() < current_best_fitness:
                     current_best_fitness = individual.getFitness()
