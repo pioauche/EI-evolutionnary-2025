@@ -38,10 +38,13 @@ class GeneticOptimizer:
                 new_table.addDirection(key, np.random.normal(-5, 5))  # Add random variation
         return new_table
     
-    def calculate_fitness(self, rot_table, sequence):
+    def calculate_fitness(self, ind, sequence):
         """Calculate how circular the structure is"""
+        a=1 #poids de l'écart aux angles tabulés
+        rot_table = RotTable()
+        table=rot_table.getTable()
         traj = Traj3D()
-        traj.compute(sequence, rot_table)
+        traj.compute(sequence, table)
         
         # Get the coordinates
         coords = traj.getTraj()
@@ -51,8 +54,14 @@ class GeneticOptimizer:
         end = np.array(coords[-1])
         end_to_start = np.linalg.norm(end - start)
         
+        # calcul de l'écart au angles tabulés
+        norm=0
+        for clé in ind:
+            norm+=(ind[clé][0]-table[clé][0])**2+(ind[clé][1]-table[clé][1])**2+(ind[clé][2]-table[clé][2])**2
+        norm=np.sqrt(norm)/len(table)
+        
         # Combine metrics (we want to minimize both)
-        return end_to_start
+        return end_to_start + a*norm
     
     def crossover(self, parent1, parent2):
         """Create a child by combining two parents"""
