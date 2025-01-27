@@ -29,14 +29,7 @@ class GeneticOptimizer:
         """Create a mutated version of the original table"""
         new_table = Individual()
         # Mutate angles in the table
-        table = new_table.getTable()
-        for key in table:
-            if np.random.random() < self.mutation_rate:
-                new_table.AddTwist(key, np.random.normal(-5, 5))  # Add random variation
-            if np.random.random() < self.mutation_rate:
-                new_table.addWedge(key, np.random.normal(-5, 5))  # Add random variation
-            if np.random.random() < self.mutation_rate:
-                new_table.addDirection(key, np.random.normal(-5, 5))  # Add random variation
+        self.mutate(new_table)
         return new_table
     
     def calculate_fitness(self, ind, sequence):
@@ -83,20 +76,18 @@ class GeneticOptimizer:
         """Apply random mutations to an individual"""
         for dinucleotide in individual.rot_table:
             if np.random.random() < self.mutation_rate:
-                current_twist = individual.getTwist()
-                individual.setTwist(dinucleotide, current_twist + np.random.normal(0, 5))
+                individual.setTwist(dinucleotide, np.random.normal(0, 5))
             if np.random.random() < self.mutation_rate:
-                current_wedge = individual.getWedge()
-                individual.setWedge(dinucleotide, current_wedge + np.random.normal(0, 5))
+                individual.setWedge(dinucleotide, np.random.normal(0, 5))
             if np.random.random() < self.mutation_rate:
-                current_direction = individual.getDirection()
-                individual.setDirection(dinucleotide, current_direction + np.random.normal(0, 5))
+                individual.setDirection(dinucleotide, np.random.normal(0, 5))
         return individual
 
-    def create_new_gen(self,population,type_choosing_parent="best",type_matching="random"):
+    def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
+        """Create a new generation of individuals based on the current population"""
         parents = []
         if type_choosing_parent == "best":
-            parents= copy.deepcopy(population)
+            parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             return parents[:self.population_size//2]
         if type_matching == "random":
@@ -106,7 +97,7 @@ class GeneticOptimizer:
                 while parent1 == parent2:
                     parent1 = population[np.random.randint(0,len(population))]
                     parent2 = population[np.random.randint(0,len(population))]
-                parents.append(self.crossover(parent1, parent2))
+                parents.append(self.crossover(parent1, parent2, crossover_type))
             while len(parents) != self.population_size:
                 parents.pop()
             return parents
@@ -143,6 +134,7 @@ class GeneticOptimizer:
                 json.dump(self.best_solution, f, indent=4)
     
     def __generate_random_tuple(self, n, N):
+        """Generates a list of indexes to be used for crossover of two parents"""
         if n > N:
             raise ValueError(f"n must be less than or equal to {N-1}")
         random_numbers = np.random.choice(np.arange(1, N-1), n, replace=False)
