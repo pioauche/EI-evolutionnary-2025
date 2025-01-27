@@ -48,20 +48,33 @@ class GeneticOptimizer:
         # Combine metrics (we want to minimize both)
         return end_to_start + radius_variance
     
-    def crossover(self, parent1, parent2):
+    def crossover(self, parent1, parent2, type=2):
         """Create a child by combining two parents"""
         child = copy.deepcopy(parent1)
-        for key in child:
+        crossover_model = self.__generate_random_tuple(type-1, child.pair)
+        dinucleotides = list(child.getTable().keys())
+        index = 0
+        for i,e in enumerate(crossover_model):
             if np.random.random() < 0.5:
-                child[key] = copy.deepcopy(parent2[key])
+                while index < e:
+                    dinucleotide = dinucleotides[index]
+                    child[dinucleotide] = copy.deepcopy(parent2[dinucleotide])
+                    index += 1
+            index = e
         return child
     
-    def mutate(self, individual):
+    def mutate(self, individual:RotTable):
         """Apply random mutations to an individual"""
-        for key in individual:
-            for i in [0, 1, 2]:  # Only mutate angle values
-                if np.random.random() < self.mutation_rate:
-                    individual[key][i] += np.random.normal(0, 5)
+        for dinucleotide in individual.rot_table:
+            if np.random.random() < self.mutation_rate:
+                current_twist = individual.getTwist()
+                individual.setTwist(dinucleotide, current_twist + np.random.normal(0, 5))
+            if np.random.random() < self.mutation_rate:
+                current_wedge = individual.getWedge()
+                individual.setWedge(dinucleotide, current_wedge + np.random.normal(0, 5))
+            if np.random.random() < self.mutation_rate:
+                current_direction = individual.getDirection()
+                individual.setDirection(dinucleotide, current_direction + np.random.normal(0, 5))
         return individual
     
     def optimize(self, sequence, generations=100):
@@ -110,3 +123,11 @@ class GeneticOptimizer:
         if self.best_solution:
             with open(filename, 'w') as f:
                 json.dump(self.best_solution, f, indent=4)
+    
+    def __generate_random_tuple(self, n, N):
+        if n > N:
+            raise ValueError(f"n must be less than or equal to {N-1}")
+        random_numbers = np.random.choice(np.arange(1, N-1), n, replace=False)
+        random_numbers.sort()
+        random_numbers = list(random_numbers)
+        return random_numbers+[N] if random_numbers[-1] != N else random_numbers
