@@ -14,8 +14,9 @@ class GeneticOptimizer:
         self.best_fitness = float('inf')
         self.best_solution = None
         self.trajectoire = Traj3D()
-        self.pair= 16
-    def load_table(self, filename="table.json"):
+        self.pair = 16
+
+    def load_table(self, filename="table copy.json"):
         # Get the directory where this script is located
         current_dir = os.path.dirname(os.path.abspath(__file__))
         table_path = os.path.join(current_dir, filename)
@@ -30,31 +31,35 @@ class GeneticOptimizer:
     def create_individual(self):
         """Create a mutated version of the original table"""
         new_table = Individual()
-        # Mutate angles in the table
-        self.mutate(new_table)
+        # Appliquer des mutations aléatoires à tous les paramètres
+        for dinucleotide in new_table.getTable():
+            new_table.addTwist(dinucleotide, np.random.uniform(-30, 30))
+            new_table.addWedge(dinucleotide, np.random.uniform(-30, 30))
+            new_table.addDirection(dinucleotide, np.random.uniform(-30, 30))
         return new_table
     
     def calculate_fitness(self, ind, sequence):
         """Calculate how circular the structure is"""
-        a=1 #poids de l'écart aux angles tabulés
+        a = 0 # Réduction du poids de l'écart aux angles tabulés
         rot_table = RotTable()
-        table=rot_table.getTable()
+        table = rot_table.getTable()
         
         self.trajectoire.compute(sequence, rot_table)
         
         # Get the coordinates
         coords = self.trajectoire.getTraj()
         self.trajectoire.reset()
+        
         # Calculate distance between start and end points
         start = np.array(coords[0])
         end = np.array(coords[-1])
         end_to_start = np.linalg.norm(end - start)
         
         # calcul de l'écart au angles tabulés
-        norm=0
+        norm = 0
         for cle in ind:
-            norm+=(ind[cle][0]-table[cle][0])**2+(ind[cle][1]-table[cle][1])**2+(ind[cle][2]-table[cle][2])**2
-        norm=np.sqrt(norm)/len(table)
+            norm += (ind[cle][0]-table[cle][0])**2 + (ind[cle][1]-table[cle][1])**2 + (ind[cle][2]-table[cle][2])**2
+        norm = np.sqrt(norm)/len(table)
         
         # Combine metrics (we want to minimize both)
         return end_to_start + a*norm
@@ -74,85 +79,97 @@ class GeneticOptimizer:
                     table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
                     index += 1
             index = e
-        return child
+        child.setTable(table)
+        
+        return self.mutate(child)
     
-    def mutate(self, individual:RotTable):
+    def mutate(self, individual:Individual):
         """Apply random mutations to an individual"""
-        for dinucleotide in individual.rot_table:
-            if np.random.random() < self.mutation_rate:
-                individual.setTwist(dinucleotide, np.random.normal(0, 5))
-            if np.random.random() < self.mutation_rate:
-                individual.setWedge(dinucleotide, np.random.normal(0, 5))
-            if np.random.random() < self.mutation_rate:
-                individual.setDirection(dinucleotide, np.random.normal(0, 5))
+        mutated = False
+        while not mutated:  # S'assurer qu'au moins une mutation est appliquée
+            for dinucleotide in individual.rot_table:
+                if np.random.random() < self.mutation_rate:
+                    individual.addTwist(dinucleotide, np.random.uniform(-30, 30))
+                    mutated = True
+                if np.random.random() < self.mutation_rate:
+                    individual.addWedge(dinucleotide, np.random.uniform(-30, 30))
+                    mutated = True
+                if np.random.random() < self.mutation_rate:
+                    individual.addDirection(dinucleotide, np.random.uniform(-30, 30))
+                    mutated = True
         return individual
 
-    def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
+    def create_new_gen(self, population, type_choosing_parent="tournament", type_matching="random", crossover_type=2):
         """Create a new generation of individuals based on the current population"""
-        parents = []
-        if type_choosing_parent == "selestion par roulette":
-            parents = []
-            liste=[x.getFitness() for x in population]
-
-
-            poids_temp = liste[:]  # Copie temporaire des poids
-            for _ in range(self.population_size//2):
-                total = sum(poids_temp)
-                if total == 0:
-                    raise ValueError("Impossible de tirer plus d'indices : les poids sont épuisés.")
-                
-                seuil = random.uniform(0, total)
-                cumul = 0
-                for i, poids in enumerate(poids_temp):
-                    cumul += poids
-                    if seuil <= cumul:
-                        parents.append(population[i])  # Ajouter l'indice tiré
-                        poids_temp[i] = 0  # Réduire le poids à zéro (sans retour)
-                        break
-        if type_choosing_parent == "best":
-            parents = copy.deepcopy(population)
-            parents.sort(key=lambda x: x.getFitness())
-            parents = parents[:self.population_size//2]
-        child=copy.deepcopy(parents)
-        if type_matching == "random":
-            for i in range(self.population_size//2):
-                parent1 = parents[np.random.randint(0,len(parents))]
-                parent2 = parents[np.random.randint(0,len(parents))]
+        # Sort population by fitness
+        population.sort(key=lambda x: x.getFitness())
+        
+        # Keep the best 10% of individuals (elitism)
+        elite_size = max(1, self.population_size // 10)
+        new_population = copy.deepcopy(population[:elite_size])
+        
+        # Select parents and create offspring until we reach population_size
+        while len(new_population) < self.population_size:
+            if type_choosing_parent == "tournament":
+                # Tournament selection
+                tournament_size = 3
+                parent1 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
+                parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 while parent1 == parent2:
-                    parent1 = parents[np.random.randint(0,len(parents))]
-                    parent2 = parents[np.random.randint(0,len(parents))]
-                child.append(self.crossover(parent1.getTable(), parent2.getTable(), crossover_type))
-            while len(child) > self.population_size:
-                child.pop()
-        return child
+                    parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
+            else:  # "best" selection
+                parent1 = population[np.random.randint(0, len(population) // 2)]
+                parent2 = population[np.random.randint(0, len(population) // 2)]
+                while parent1 == parent2:
+                    parent2 = population[np.random.randint(0, len(population) // 2)]
+            
+            # Create child through crossover and mutation
+            child = self.crossover(parent1, parent2, crossover_type)
+            new_population.append(child)
+        
+        return new_population
     
     def optimize(self, sequence, generations=100):
         """Run the genetic algorithm"""
-        # Initialize population
+        # Initialize population with random individuals
         population = []
-        population.append(Individual())
-        for i in range(self.population_size-1):
-            temp = Individual()
-            for dinucleotide in temp.getTable():
-                temp.addTwist(dinucleotide,np.random.randint(-20,21))
-                temp.addWedge(dinucleotide,np.random.randint(-5,6))
-                temp.addDirection(dinucleotide,np.random.randint(-30,31))
-            population.append(temp)
+        for i in range(self.population_size):
+            population.append(self.create_individual())  # Tous les individus sont maintenant mutés
+
+        best_fitness_history = []
+        generations_without_improvement = 0
+        
         for gen in range(generations):
             # Evaluate fitness for each individual
-            best_idx = float('inf')
-            for i,individual in enumerate(population):
+            current_best_fitness = float('inf')
+            best_individual = None
+            
+            for individual in population:
                 if not individual.isCalculated():
                     fitness = self.calculate_fitness(individual.getTable(), sequence)
                     individual.setFitness(fitness)
                     individual.calculate(True)
-                if individual.getFitness() < best_idx:
-                    best_idx = individual.getFitness()
-                    id = i
-            self.best_fitness=best_idx
-            # Keep track of best solution
-            self.best_solution = copy.deepcopy(population[id])
-            print(f"Generation {gen}: New best fitness = {self.best_fitness}")            
+                
+                if individual.getFitness() < current_best_fitness:
+                    current_best_fitness = individual.getFitness()
+                    best_individual = individual
+            
+            # Update best solution if we found a better one
+            if current_best_fitness < self.best_fitness:
+                self.best_fitness = current_best_fitness
+                self.best_solution = copy.deepcopy(best_individual)
+                generations_without_improvement = 0
+            else:
+                generations_without_improvement += 1
+            
+            best_fitness_history.append(self.best_fitness)
+            print(f"Generation {gen}: Best fitness = {self.best_fitness}, Avg fitness = {sum(ind.getFitness() for ind in population)/len(population):.2f}")
+            
+            # Early stopping if no improvement for many generations
+            if generations_without_improvement > 20:
+                print("Early stopping: No improvement for 20 generations")
+                break
+                
             # Create next generation
             population = self.create_new_gen(population)
 

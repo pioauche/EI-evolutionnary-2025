@@ -98,8 +98,11 @@ class Traj3D:
 
     def draw(self):
         xyz = np.array(self.__Traj3D)
+
         x, y, z = xyz[:,0], xyz[:,1], xyz[:,2]
         self.ax.plot(x,y,z)
+        self.ax.scatter(xyz[0][0],xyz[0][1],xyz[0][2],color='red',s=100)
+        self.ax.scatter(xyz[-1][0],xyz[-1][1],xyz[-1][2],color='green',s=100)
         plt.show()
 
     def write(self, filename: str):
