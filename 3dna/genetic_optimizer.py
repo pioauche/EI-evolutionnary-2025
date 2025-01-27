@@ -1,5 +1,6 @@
 import numpy as np
 import json
+import random
 import copy
 import os
 from .Traj3D import Traj3D
@@ -90,6 +91,7 @@ class GeneticOptimizer:
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:self.population_size//2]
+            fils=copy.deepcopy(parents)
         if type_matching == "random":
             for i in range(self.population_size//2):
                 parent1 = parents[np.random.randint(0,len(parents))]
@@ -97,10 +99,10 @@ class GeneticOptimizer:
                 while parent1 == parent2:
                     parent1 = parents[np.random.randint(0,len(parents))]
                     parent2 = parents[np.random.randint(0,len(parents))]
-                parents.append(self.crossover(parent1.getTable(), parent2.getTable()))
+                fils.append(self.crossover(parent1.getTable(), parent2.getTable()))
             while len(parents) != self.population_size:
                 parents.pop()
-        return parents
+        return fils
     def optimize(self, sequence, generations=100):
         """Run the genetic algorithm"""
         # Initialize population
