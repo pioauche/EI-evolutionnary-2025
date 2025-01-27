@@ -16,11 +16,11 @@ def main():
     with open(args.filename, 'r') as f:
         lineList = [line.rstrip('\n') for line in f]
     seq = ''.join(lineList[1:])
-
+    print (seq)
     if args.optimize:
         print("Running genetic optimization...")
         optimizer = GeneticOptimizer(population_size=args.population)
-        optimizer.load_table('table.json')
+        optimizer.load_table()
         optimized_table = optimizer.optimize(seq, generations=args.generations)
         optimizer.save_solution('optimized_table.json')
         
