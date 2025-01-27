@@ -60,6 +60,8 @@ class Traj3D:
             # en appliquant toutes les transformations géométriques
             # à la position du premier nucléotide
             self.__Traj3D.append(total_matrix @ self.__Traj3D[0])
+    def reset(self):
+        self.__Traj3D = []
 
     def __compute_matrices(self, rot_table: RotTable, dinucleotide: str):
 

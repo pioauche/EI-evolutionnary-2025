@@ -11,7 +11,7 @@ class GeneticOptimizer:
         self.mutation_rate = mutation_rate
         self.best_fitness = float('inf')
         self.best_solution = None
-        
+        self.trajectoire = Traj3D()
     def load_table(self, filename="table.json"):
         # Get the directory where this script is located
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +31,7 @@ class GeneticOptimizer:
         table = new_table.getTable()
         for key in table:
             if np.random.random() < self.mutation_rate:
-                new_table.AddTwist(key, np.random.normal(-5, 5))  # Add random variation
+                new_table.addTwist(key, np.random.normal(-5, 5))  # Add random variation
             if np.random.random() < self.mutation_rate:
                 new_table.addWedge(key, np.random.normal(-5, 5))  # Add random variation
             if np.random.random() < self.mutation_rate:
@@ -43,12 +43,12 @@ class GeneticOptimizer:
         a=1 #poids de l'écart aux angles tabulés
         rot_table = RotTable()
         table=rot_table.getTable()
-        traj = Traj3D()
-        traj.compute(sequence, rot_table)
+        
+        self.trajectoire.compute(sequence, rot_table)
         
         # Get the coordinates
-        coords = traj.getTraj()
-        
+        coords = self.trajectoire.getTraj()
+        self.trajectoire.reset()
         # Calculate distance between start and end points
         start = np.array(coords[0])
         end = np.array(coords[-1])
@@ -65,14 +65,14 @@ class GeneticOptimizer:
     
     def crossover(self, parent1, parent2):
         """Create a child by combining two parents"""
-        child = RotTable()
+        child = Individual()
         child.table = {}
         
-        for key in parent1.table:
+        for key in parent1:
             if np.random.random() < 0.5:
-                child.table[key] = copy.deepcopy(parent1.table[key])
+                child.table[key] = copy.deepcopy(parent1[key])
             else:
-                child.table[key] = copy.deepcopy(parent2.table[key])
+                child.table[key] = copy.deepcopy(parent2[key])
         return child
     
     def mutate(self, individual):
@@ -87,18 +87,18 @@ class GeneticOptimizer:
         if type_choosing_parent == "best":
             parents= copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
-            return parents[:self.population_size//2]
+            parents = parents[:self.population_size//2]
         if type_matching == "random":
             for i in range(self.population_size//2):
-                parent1 = population[np.random.randint(0,len(population))]
-                parent2 = population[np.random.randint(0,len(population))]
+                parent1 = parents[np.random.randint(0,len(parents))]
+                parent2 = parents[np.random.randint(0,len(parents))]
                 while parent1 == parent2:
-                    parent1 = population[np.random.randint(0,len(population))]
-                    parent2 = population[np.random.randint(0,len(population))]
-                parents.append(self.crossover(parent1, parent2))
+                    parent1 = parents[np.random.randint(0,len(parents))]
+                    parent2 = parents[np.random.randint(0,len(parents))]
+                parents.append(self.crossover(parent1.getTable(), parent2.getTable()))
             while len(parents) != self.population_size:
                 parents.pop()
-            return parents
+        return parents
     def optimize(self, sequence, generations=100):
         """Run the genetic algorithm"""
         # Initialize population
@@ -121,12 +121,18 @@ class GeneticOptimizer:
             # Create next generation
             population = self.create_new_gen(population)
 
-        
         return self.best_solution
     
     def save_solution(self, filename='optimized_table.json'):
         """Save the best solution to a file"""
         if self.best_solution:
-            # Save the table from the RotTable instance
+        # Save the table from the RotTable instance
             with open(filename, 'w') as f:
-                json.dump(self.best_solution.getTable, f, indent=4, default=lambda o: o.__dict__)
+                json.dump(
+                self.best_solution.getTable(), 
+                f, 
+                indent=4,  # Indentation pour une meilleure lisibilité
+                default=lambda o: o.__dict__,
+                separators=(',', ': ')  # Ajoute des espaces après les deux-points
+            )
+

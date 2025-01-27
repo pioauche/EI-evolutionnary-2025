@@ -16,7 +16,6 @@ def main():
     with open(args.filename, 'r') as f:
         lineList = [line.rstrip('\n') for line in f]
     seq = ''.join(lineList[1:])
-    print (seq)
     if args.optimize:
         print("Running genetic optimization...")
         optimizer = GeneticOptimizer(population_size=args.population)
@@ -25,8 +24,8 @@ def main():
         optimizer.save_solution('optimized_table.json')
         
         # Use optimized table
-        rot_table = RotTable()
-        rot_table.table = optimized_table
+        rot_table = RotTable('optimized_table.json')
+        
     else:
         rot_table = RotTable()
 

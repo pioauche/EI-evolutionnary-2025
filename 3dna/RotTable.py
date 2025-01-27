@@ -25,7 +25,7 @@ class RotTable:
     def setDirection(self, dinucleotide: str, value: float):
         self.rot_table[dinucleotide][2] = value
     
-    def AddTwist(self, dinucleotide: str, value: float):
+    def addTwist(self, dinucleotide: str, value: float):
         self.rot_table[dinucleotide][0] += value
 
     def addWedge(self, dinucleotide: str, value: float):
