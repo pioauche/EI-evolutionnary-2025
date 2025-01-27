@@ -15,7 +15,7 @@ class GeneticOptimizer:
         self.trajectoire = Traj3D()
         self.pair = 16
 
-    def load_table(self, filename="table copy.json"):
+    def load_table(self, filename="table.json"):
         # Get the directory where this script is located
         current_dir = os.path.dirname(os.path.abspath(__file__))
         table_path = os.path.join(current_dir, filename)
@@ -40,10 +40,9 @@ class GeneticOptimizer:
     def calculate_fitness(self, ind, sequence):
         """Calculate how circular the structure is"""
         a = 0 # Réduction du poids de l'écart aux angles tabulés
-        rot_table = RotTable()
-        table = rot_table.getTable()
+        table = ind.getTable()
         
-        self.trajectoire.compute(sequence, rot_table)
+        self.trajectoire.compute(sequence, ind)
         
         # Get the coordinates
         coords = self.trajectoire.getTraj()
@@ -56,8 +55,9 @@ class GeneticOptimizer:
         
         # calcul de l'écart au angles tabulés
         norm = 0
-        for cle in ind:
-            norm += (ind[cle][0]-table[cle][0])**2 + (ind[cle][1]-table[cle][1])**2 + (ind[cle][2]-table[cle][2])**2
+        table2 = ind.getTable()
+        for cle in table2:
+            norm += (table2[cle][0]-table[cle][0])**2 + (table2[cle][1]-table[cle][1])**2 + (table2[cle][2]-table[cle][2])**2
         norm = np.sqrt(norm)/len(table)
         
         # Combine metrics (we want to minimize both)
@@ -105,7 +105,7 @@ class GeneticOptimizer:
         
         # Keep the best 10% of individuals (elitism)
         elite_size = max(1, self.population_size // 10)
-        new_population = copy.deepcopy(population[:elite_size])
+        new_population = copy.deepcopy(population[elite_size:])
         
         # Select parents and create offspring until we reach population_size
         while len(new_population) < self.population_size:
@@ -145,7 +145,7 @@ class GeneticOptimizer:
             
             for individual in population:
                 if not individual.isCalculated():
-                    fitness = self.calculate_fitness(individual.getTable(), sequence)
+                    fitness = self.calculate_fitness(individual, sequence)
                     individual.setFitness(fitness)
                     individual.calculate(True)
                 
@@ -167,6 +167,8 @@ class GeneticOptimizer:
             # Early stopping if no improvement for many generations
             if generations_without_improvement > 20:
                 print("Early stopping: No improvement for 20 generations")
+                for popo in population:
+                    print(popo.getFitness())
                 break
                 
             # Create next generation

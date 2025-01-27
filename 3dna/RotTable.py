@@ -11,7 +11,7 @@ class RotTable:
 
     def __init__(self, filename: str = None):
         if filename is None:
-            filename = os_path.join(here, 'table copy.json')
+            filename = os_path.join(here, 'table.json')
         self.rot_table = json_load(open(filename))
         
     ###################
