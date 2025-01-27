@@ -1,25 +1,38 @@
 from .RotTable import RotTable
 from .Traj3D import Traj3D
+from .genetic_optimizer import GeneticOptimizer
 
 import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("filename", help="input filename of DNA sequence")
-parser.parse_args()
-args = parser.parse_args()
 
 def main():
-
-    rot_table = RotTable()
-    traj = Traj3D()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", help="input filename of DNA sequence")
+    parser.add_argument("--optimize", action="store_true", help="Run genetic optimization")
+    parser.add_argument("--generations", type=int, default=100, help="Number of generations for optimization")
+    parser.add_argument("--population", type=int, default=50, help="Population size for genetic algorithm")
+    args = parser.parse_args()
 
     # Read file
-    lineList = [line.rstrip('\n') for line in open(args.filename)]
-    # Formatting
+    with open(args.filename, 'r') as f:
+        lineList = [line.rstrip('\n') for line in f]
     seq = ''.join(lineList[1:])
+
+    if args.optimize:
+        print("Running genetic optimization...")
+        optimizer = GeneticOptimizer(population_size=args.population)
+        optimizer.load_table('table.json')
+        optimized_table = optimizer.optimize(seq, generations=args.generations)
+        optimizer.save_solution('optimized_table.json')
+        
+        # Use optimized table
+        rot_table = RotTable()
+        rot_table.table = optimized_table
+    else:
+        rot_table = RotTable()
+
+    # Create trajectory
+    traj = Traj3D()
     traj.compute(seq, rot_table)
-
-    # print(traj.getTraj())
-
     traj.draw()
     traj.write(args.filename+".png")
 
