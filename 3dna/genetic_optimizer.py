@@ -5,6 +5,7 @@ import os
 from .Traj3D import Traj3D
 from .RotTable import RotTable
 from .Individual import Individual
+
 class GeneticOptimizer:
     def __init__(self, population_size=50, mutation_rate=0.1):
         self.population_size = population_size
@@ -91,6 +92,7 @@ class GeneticOptimizer:
                 current_direction = individual.getDirection()
                 individual.setDirection(dinucleotide, current_direction + np.random.normal(0, 5))
         return individual
+
     def create_new_gen(self,population,type_choosing_parent="best",type_matching="random"):
         parents = []
         if type_choosing_parent == "best":
@@ -108,6 +110,7 @@ class GeneticOptimizer:
             while len(parents) != self.population_size:
                 parents.pop()
             return parents
+
     def optimize(self, sequence, generations=100):
         """Run the genetic algorithm"""
         # Initialize population
@@ -130,7 +133,6 @@ class GeneticOptimizer:
             # Create next generation
             population = self.create_new_gen(population)
 
-        
         return self.best_solution
     
     def save_solution(self, filename='optimized_table.json'):
