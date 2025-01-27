@@ -19,8 +19,9 @@ class Traj3D:
     )
 
     def __init__(self):
+        plt.close('all')
         self.__Traj3D = {}
-        self.fig = plt.figure()
+        self.fig = plt.figure('Molécule d\'ADN')
         self.ax = plt.axes(projection='3d')
 
     def getTraj(self) -> dict:
@@ -95,6 +96,9 @@ class Traj3D:
                         [0, 0, 0, 1]])
         
         return matrices_Rz, matrices_Q
+
+    def reset(self):
+        self.__Traj3D = []
 
     def draw(self):
         xyz = np.array(self.__Traj3D)

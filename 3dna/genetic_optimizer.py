@@ -16,7 +16,7 @@ class GeneticOptimizer:
         self.trajectoire = Traj3D()
         self.pair = 16
 
-    def load_table(self, filename="table copy.json"):
+    def load_table(self, filename="table.json"):
         # Get the directory where this script is located
         current_dir = os.path.dirname(os.path.abspath(__file__))
         table_path = os.path.join(current_dir, filename)
@@ -38,13 +38,14 @@ class GeneticOptimizer:
             new_table.addDirection(dinucleotide, np.random.uniform(-30, 30))
         return new_table
     
-    def calculate_fitness(self, ind, sequence):
+    def calculate_fitness(self, ind:Individual, sequence):
         """Calculate how circular the structure is"""
         a = 0 # Réduction du poids de l'écart aux angles tabulés
         rot_table = RotTable()
         table = rot_table.getTable()
+        ind_table = ind.getTable()
         
-        self.trajectoire.compute(sequence, rot_table)
+        self.trajectoire.compute(sequence, ind)
         
         # Get the coordinates
         coords = self.trajectoire.getTraj()
@@ -57,8 +58,8 @@ class GeneticOptimizer:
         
         # calcul de l'écart au angles tabulés
         norm = 0
-        for cle in ind:
-            norm += (ind[cle][0]-table[cle][0])**2 + (ind[cle][1]-table[cle][1])**2 + (ind[cle][2]-table[cle][2])**2
+        for key in ind_table:
+            norm += (ind_table[key][0]-table[key][0])**2 + (ind_table[key][1]-table[key][1])**2 + (ind_table[key][2]-table[key][2])**2
         norm = np.sqrt(norm)/len(table)
         
         # Combine metrics (we want to minimize both)
@@ -67,7 +68,7 @@ class GeneticOptimizer:
     def crossover(self, parent1, parent2, crossover_type=2):
         """Create a child by combining two parents"""
         child = copy.deepcopy(parent1)
-        child.calculate(False)
+        child.setCalculated(False)
         table = child.getTable()
         crossover_model = self.__generate_random_tuple(crossover_type-1, self.pair)
         dinucleotides = list(table.keys())
@@ -146,9 +147,9 @@ class GeneticOptimizer:
             
             for individual in population:
                 if not individual.isCalculated():
-                    fitness = self.calculate_fitness(individual.getTable(), sequence)
+                    fitness = self.calculate_fitness(individual, sequence)
                     individual.setFitness(fitness)
-                    individual.calculate(True)
+                    individual.setCalculated(True)
                 
                 if individual.getFitness() < current_best_fitness:
                     current_best_fitness = individual.getFitness()
