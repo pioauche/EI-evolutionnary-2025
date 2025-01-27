@@ -58,10 +58,10 @@ class GeneticOptimizer:
         # Combine metrics (we want to minimize both)
         return end_to_start + a*norm
     
-    def crossover(self, parent1, parent2, type=2):
+    def crossover(self, parent1, parent2, crossover_type=2):
         """Create a child by combining two parents"""
         child = copy.deepcopy(parent1)
-        crossover_model = self.__generate_random_tuple(type-1, child.pair)
+        crossover_model = self.__generate_random_tuple(crossover_type-1, child.pair)
         dinucleotides = list(child.getTable().keys())
         index = 0
         for i,e in enumerate(crossover_model):
@@ -91,7 +91,7 @@ class GeneticOptimizer:
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:self.population_size//2]
-            fils=copy.deepcopy(parents)
+            child=copy.deepcopy(parents)
         if type_matching == "random":
             for i in range(self.population_size//2):
                 parent1 = parents[np.random.randint(0,len(parents))]
@@ -99,10 +99,11 @@ class GeneticOptimizer:
                 while parent1 == parent2:
                     parent1 = parents[np.random.randint(0,len(parents))]
                     parent2 = parents[np.random.randint(0,len(parents))]
-                fils.append(self.crossover(parent1.getTable(), parent2.getTable()))
-            while len(parents) != self.population_size:
-                parents.pop()
-        return fils
+                child.append(self.crossover(parent1.getTable(), parent2.getTable(), crossover_type))
+            while len(child) > self.population_size:
+                child.pop()
+        return child
+    
     def optimize(self, sequence, generations=100):
         """Run the genetic algorithm"""
         # Initialize population
