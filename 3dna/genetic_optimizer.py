@@ -44,7 +44,7 @@ class GeneticOptimizer:
         rot_table = RotTable()
         table=rot_table.getTable()
         traj = Traj3D()
-        traj.compute(sequence, table)
+        traj.compute(sequence, rot_table)
         
         # Get the coordinates
         coords = traj.getTraj()
@@ -56,8 +56,8 @@ class GeneticOptimizer:
         
         # calcul de l'écart au angles tabulés
         norm=0
-        for clé in ind:
-            norm+=(ind[clé][0]-table[clé][0])**2+(ind[clé][1]-table[clé][1])**2+(ind[clé][2]-table[clé][2])**2
+        for cle in ind:
+            norm+=(ind[cle][0]-table[cle][0])**2+(ind[cle][1]-table[cle][1])**2+(ind[cle][2]-table[cle][2])**2
         norm=np.sqrt(norm)/len(table)
         
         # Combine metrics (we want to minimize both)
@@ -109,7 +109,7 @@ class GeneticOptimizer:
             best_idx = float('inf')
             for i,individual in enumerate(population):
                 if not individual.isCalculated():
-                    fitness = self.calculate_fitness(individual, sequence)
+                    fitness = self.calculate_fitness(individual.getTable(), sequence)
                     individual.setFitness(fitness)
                 if individual.getFitness() < best_idx:
                     best_idx = individual.getFitness()
