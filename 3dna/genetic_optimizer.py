@@ -37,9 +37,9 @@ class GeneticOptimizer:
         # Apply random mutations to all parameters of the individual's table
         for dinucleotide in table:
             dinu = table[dinucleotide]
-            individu.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))
-            individu.addWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))
-            individu.addDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
+            individu.setTwist(dinucleotide, np.random.normal(dinu[0],dinu[3]))
+            individu.setWedge(dinucleotide, np.random.normal(dinu[1],dinu[4]))
+            individu.setDirection(dinucleotide, np.random.normal(dinu[2],dinu[5]))
         return individu
 
     def calculate_fitness(self, ind: Individual, sequence: str):
@@ -99,11 +99,11 @@ class GeneticOptimizer:
         for dinucleotide in table:
             dinu = table[dinucleotide]
             if np.random.random() < self.mutation_rate:
-                individual.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))
+                individual.setTwist(dinucleotide, np.random.normal(dinu[0],dinu[3]))
             if np.random.random() < self.mutation_rate:
-                individual.addWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))
+                individual.setWedge(dinucleotide, np.random.normal(dinu[1],dinu[4]))
             if np.random.random() < self.mutation_rate:
-                individual.addDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
+                individual.setDirection(dinucleotide, np.random.normal(dinu[2],dinu[5]))
         
         return individual  # Return the mutated individual
 
@@ -128,7 +128,7 @@ class GeneticOptimizer:
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
-                seuil = random.uniform(0, total)
+                seuil = random.normal(0, total)
                 cumul = 0
                 for i, poids in enumerate(poids_temp):
                     cumul += poids
@@ -147,7 +147,7 @@ class GeneticOptimizer:
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
-                seuil = random.uniform(0, total)
+                seuil = random.normal(0, total)
                 cumul = 0
                 for i, poids in enumerate(poids_temp):
                     cumul += poids
