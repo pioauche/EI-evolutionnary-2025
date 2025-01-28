@@ -130,10 +130,6 @@ class GeneticOptimizer:
             poids=[k+1 for k in range(self.population_size)]
             poids_temp = poids[:]  # Copie temporaire des poids
             for _ in range(int(b*self.population_size)):
-            population.sort(key=lambda x: x.getFitness())  # Sort population by fitness
-            poids = [k+1 for k in range(self.population_size)]  # Weights for rank-based selection
-            poids_temp = poids[:]
-            for _ in range(self.population_size//2):
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
@@ -244,7 +240,7 @@ class GeneticOptimizer:
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population, crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="selection par rang" ,crossover_type=2)
 
         return self.best_solution  # Return the best solution found
 
