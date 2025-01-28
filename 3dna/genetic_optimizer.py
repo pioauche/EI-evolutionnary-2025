@@ -183,8 +183,6 @@ class GeneticOptimizer:
                 while parent1 == parent2:
                     parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 child.append(self.crossover(parent1, parent2, crossover_type))
-        if len(child) > self.population_size:
-            child.pop()
         print(len(child))
         return child  # Return the new generation
 
