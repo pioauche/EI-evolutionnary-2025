@@ -305,3 +305,64 @@ class Tests :
 
     if __name__ == '__main__':
         unittest.main()
+
+    
+
+
+
+
+
+
+
+
+
+
+    #   Test unhealed
+    class DummyIndividual:
+        def __init__(self, table):
+            self._table = table
+        def getTable(self):
+            return self._table
+        def setTable(self, new_table):
+            self._table = new_table
+
+    class DummySelf:
+        def calculate_fitness(self, ind, sequence):
+            total = 0.0
+            for key in ind.getTable():
+                for val in ind.getTable()[key]:
+                    total += val**2
+            return total
+
+
+        def test_simulated_annealing_basic_run():
+            dummy_obj = DummySelf()
+            initial_table = {
+                'liaisonA': [5.0, -2.0, 3.0],
+                'liaisonB': [1.0,  4.0, -1.5]
+            }
+            ind = DummyIndividual(initial_table)
+            
+            # Paramètres
+            kmax = 50
+            emax = 0.01
+            initial_temp = 10
+            sequence = None  # Pas utilisé ici
+
+            initial_fitness = dummy_obj.calculate_fitness(ind, sequence)
+            
+            best_table = simulated_annealing(
+                self=dummy_obj,
+                ind=ind,
+                sequence=sequence,
+                kmax=kmax,
+                emax=emax,
+                initial_temp=initial_temp
+            )
+            
+            # Vérifications
+            assert isinstance(best_table, dict), "Le résultat doit être un dictionnaire"
+            final_fitness = dummy_obj.calculate_fitness(ind, sequence)
+            assert final_fitness <= initial_fitness, (
+                f"La fitness finale ({final_fitness}) devrait être inférieure ou égale à la fitness initiale ({initial_fitness})."
+            )
