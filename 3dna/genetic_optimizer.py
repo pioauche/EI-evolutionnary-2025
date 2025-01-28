@@ -41,7 +41,7 @@ class GeneticOptimizer:
     
     def calculate_fitness(self, ind:Individual, sequence):
         """Calculate how circular the structure is"""
-        a = 0 # Réduction du poids de l'écart aux angles tabulés
+        a = 0.2 # Réduction du poids de l'écart aux angles tabulés
         rot_table = RotTable()
         table = rot_table.getTable()
         ind_table = ind.getTable()
