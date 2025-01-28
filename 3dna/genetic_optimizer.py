@@ -128,7 +128,7 @@ class GeneticOptimizer:
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
-                seuil = random.normal(0, total)
+                seuil = np.random.uniform(0, total)
                 cumul = 0
                 for i, poids in enumerate(poids_temp):
                     cumul += poids
@@ -141,13 +141,13 @@ class GeneticOptimizer:
             # Roulette wheel selection
             parents = []
             liste=[x.getFitness() for x in population]
-            max=max(liste)
-            poids_temp = [max-x for x in liste]  # Copie temporaire des poids
+            maxi=max(liste)
+            poids_temp = [maxi-x for x in liste]  # Copie temporaire des poids
             for _ in range(int(b*self.population_size)):
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
-                seuil = random.normal(0, total)
+                seuil = np.random.uniform(0, total)
                 cumul = 0
                 for i, poids in enumerate(poids_temp):
                     cumul += poids
@@ -240,7 +240,7 @@ class GeneticOptimizer:
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="selection par roulette",type_matching="random",crossover_type=2)
 
         return self.best_solution  # Return the best solution found
 
