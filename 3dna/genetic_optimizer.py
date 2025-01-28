@@ -112,11 +112,24 @@ class GeneticOptimizer:
         
         return individual  # Return the mutated individual
 
-    def create_new_gen(self, population: list[Individual], type_choosing_parent="best", type_matching="random", crossover_type=2):
-        """Create a new generation of individuals based on the current population."""
+    def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
+        """Create a new generation of individuals based on the current population"""
+        b=0.5 #proportion d'individus selectionnés
+        if type_choosing_parent == "tournoi":
+            parents=[]
+            populationbis = copy.deepcopy(population)
+            for i in range(int(b*self.population_size)):
+                tournament_size = 3
+                parent = min(np.random.choice(populationbis, tournament_size), key=lambda x: x.getFitness())
+                populationbis.remove(parent)
+                parents.append(parent)
         if type_choosing_parent == "selection par rang":
             # Rank-based selection of parents
             parents = []
+            population.sort(key=lambda x: x.getFitness())
+            poids=[k+1 for k in range(self.population_size)]
+            poids_temp = poids[:]  # Copie temporaire des poids
+            for _ in range(int(b*self.population_size)):
             population.sort(key=lambda x: x.getFitness())  # Sort population by fitness
             poids = [k+1 for k in range(self.population_size)]  # Weights for rank-based selection
             poids_temp = poids[:]
@@ -155,11 +168,12 @@ class GeneticOptimizer:
             # Select the best individuals as parents
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
-            parents = parents[:self.population_size//2]
-
-        child = copy.deepcopy(parents)
-
+            parents = parents[:int(b*self.population_size)]
+        child=copy.deepcopy(parents)
         if type_matching == "random":
+            for i in range(int(b*self.population_size)):
+                parent1 = parents[np.random.randint(0,len(parents))]
+                parent2 = parents[np.random.randint(0,len(parents))]
             # Randomly pair parents for crossover
             for i in range(self.population_size//2):
                 parent1 = parents[np.random.randint(0, len(parents))]
@@ -167,13 +181,9 @@ class GeneticOptimizer:
                 while parent1 == parent2:
                     parent2 = parents[np.random.randint(0, len(parents))]
                 child.append(self.crossover(parent1, parent2, crossover_type))
-
-            while len(child) > self.population_size:
-                child.pop()
-
         if type_matching == "tournament":
-            # Tournament-based selection for pairing
-            for i in range(self.population_size//2):
+            # Tournament selection
+            for i in range(int(b*self.population_size)):
                 tournament_size = 3
                 parent1 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
