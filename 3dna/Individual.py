@@ -1,4 +1,3 @@
-from decimal import Rounded
 from .RotTable import RotTable
 
 class Individual(RotTable):
