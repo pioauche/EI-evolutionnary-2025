@@ -238,12 +238,12 @@ class GeneticOptimizer:
             print(f"Generation {gen}: Best fitness = {self.best_fitness}, Avg fitness = {sum(ind.getFitness() for ind in population)/len(population):.2f}")
 
             # Early stopping if no improvement for many generations
-            if generations_without_improvement > 40:
+            if generations_without_improvement > 10000:
                 print("Early stopping: No improvement for 20 generations")
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="selection par roulette",type_matching="random",crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2)
 
         return self.best_solution  # Return the best solution found
 
