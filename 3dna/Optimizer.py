@@ -14,9 +14,8 @@ class Optimizer(ABC):
         self.mutation_rate = mutation_rate          # Probability of mutation per parameter
         self.trajectoire = Traj3D()                 # Instance of Traj3D for trajectory calculations
         self.pair = 16                              # Number of dinucleotide pairs for crossover
-        self.original_table = None                  # Original rotation table
-        self.best_solution = None  # Store the best solution found
-        self.best_fitness = float('inf')  # Keep track of the best fitness score
+        self.best_solution = None                   # Store the best solution found
+        self.best_fitness = float('inf')            # Keep track of the best fitness score
 
     def load_table(self, filename="table.json"):
         # Load the initial table from a JSON file
@@ -25,7 +24,7 @@ class Optimizer(ABC):
         
         try:
             # Create a RotTable instance from the loaded file
-            self.original_table = Individual(table_path)
+            self.ind_ref = Individual(table_path)
             print(f"Successfully loaded table from: {table_path}")
         except FileNotFoundError:
             raise FileNotFoundError(f"Could not find {filename} at {table_path}")

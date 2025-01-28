@@ -4,9 +4,8 @@ from .Optimizer import Optimizer
 from .Individual import Individual
 
 class SimulatedAnnealingOptimizer(Optimizer):
-    def __init__(self, generations=100, population_size=50, mutation_rate=0.1, individual=Individual(), kmax=10000, emax=2, initial_temp=10):
+    def __init__(self, generations=100, population_size=50, mutation_rate=0.1, kmax=10000, emax=1, initial_temp=100):
         super().__init__(generations, population_size, mutation_rate)
-        self.individual = individual
         self.kmax = kmax
         self.emax = emax
         self.initial_temp = initial_temp
@@ -19,14 +18,15 @@ class SimulatedAnnealingOptimizer(Optimizer):
         while not mutated:
             # Ensure at least one mutation occurs
             for dinucleotide in table:
+                dinu = table[dinucleotide]
                 if np.random.random() < self.mutation_rate:
-                    individual.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
+                    individual.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))
                     mutated = True
                 if np.random.random() < self.mutation_rate:
-                    individual.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
+                    individual.setWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))
                     mutated = True
                 if np.random.random() < self.mutation_rate:
-                    individual.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
+                    individual.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
                     mutated = True
         
         return individual
@@ -39,7 +39,7 @@ class SimulatedAnnealingOptimizer(Optimizer):
             initial_temp (float): Température initiale pour le recuit simulé.
         """
         # Initialisation
-        current_individual = copy.deepcopy(self.individual)
+        current_individual = copy.deepcopy(self.ind_ref)
         current_fitness = self.calculate_fitness(current_individual, dna_sequence)
         self.best_solution = copy.deepcopy(current_individual)
         self.best_fitness = current_fitness
@@ -69,5 +69,5 @@ class SimulatedAnnealingOptimizer(Optimizer):
             # Passer à l'itération suivante
             k += 1
 
-        print(f"Best fitness: {self.best_fitness}")
+        print(f"Best fitness: {self.best_fitness} for iteration {self.kmax}")
         return self.best_solution
