@@ -27,13 +27,24 @@ class RotTable:
         self.__rot_table[dinucleotide][2] = value
     
     def addTwist(self, dinucleotide: str, value: float):
-        self.__rot_table[dinucleotide][0] += value
+        if value < 0:
+            self.__rot_table[dinucleotide][0] = max(self.__rot_table[dinucleotide][0] -self.__rot_table[dinucleotide][3], self.__rot_table[dinucleotide][0]+value)
+        else:
+            self.__rot_table[dinucleotide][0] = min(self.__rot_table[dinucleotide][0] -self.__rot_table[dinucleotide][3], self.__rot_table[dinucleotide][0]+value)
 
     def addWedge(self, dinucleotide: str, value: float):
-        self.__rot_table[dinucleotide][1] += value
+        if value < 0:
+            self.__rot_table[dinucleotide][1] = max(self.__rot_table[dinucleotide][1] -self.__rot_table[dinucleotide][4], self.__rot_table[dinucleotide][1]+value)
+        else:
+            self.__rot_table[dinucleotide][1] = min(self.__rot_table[dinucleotide][1] -self.__rot_table[dinucleotide][4], self.__rot_table[dinucleotide][1]+value)
+
 
     def addDirection(self, dinucleotide: str, value: float):
-        self.__rot_table[dinucleotide][2] += value
+        if value < 0:
+            self.__rot_table[dinucleotide][2] = max(self.__rot_table[dinucleotide][2] -self.__rot_table[dinucleotide][5], self.__rot_table[dinucleotide][2]+value)
+        else:
+            self.__rot_table[dinucleotide][2] = min(self.__rot_table[dinucleotide][2] -self.__rot_table[dinucleotide][5], self.__rot_table[dinucleotide][2]+value)
+
     
     def setTable(self, table: dict):
         self.rot_table = table
