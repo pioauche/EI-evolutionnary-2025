@@ -39,3 +39,41 @@ def simulated_annealing(self, table, sequence, kmax, emax, initial_temp):
     return best_table
 
 
+def main():
+    # Instancier l'optimiseur
+    ga = GeneticOptimizer()
+
+    # Créer un dictionnaire "table" minimaliste
+    table_initiale = {
+        "liaisonA": [1.0, 2.0, 3.0],
+        "liaisonB": [-1.5, 4.0, 0.5],
+    }
+
+    # Paramètres du recuit simulé
+    kmax = 100
+    emax = 1
+    initial_temp = 100
+
+    # Lancer le recuit simulé
+    best_table = ga.simulated_annealing(
+        table=table_initiale,
+        sequence,
+        kmax=kmax,
+        emax=emax,
+        initial_temp=initial_temp
+    )
+
+    # Afficher les résultats
+    print("Table de départ :", table_initiale)
+    print("Meilleure table trouvée :", best_table)
+
+    # Calculer et afficher la fitness finale
+    best_ind = Individual(best_table)
+    best_fitness = ga.calculate_fitness(best_ind, sequence)
+    print("Fitness de la meilleure table :", best_fitness)
+
+
+if __name__ == "__main__":
+    main()
+
+
