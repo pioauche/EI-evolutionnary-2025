@@ -168,7 +168,7 @@ class GeneticOptimizer:
             parents = parents[:int(b*self.population_size)]
         child=copy.deepcopy(parents)
         if type_matching == "random":
-            for i in range(int((1-b)*self.population_size)):
+            while len(child)<self.population_size:
                 parent1 = parents[np.random.randint(0,len(parents))]
                 parent2 = parents[np.random.randint(0,len(parents))]
                 while parent1 == parent2:
@@ -176,13 +176,15 @@ class GeneticOptimizer:
                 child.append(self.crossover(parent1, parent2, crossover_type))
         if type_matching == "tournament":
             # Tournament selection
-            for i in range(int((1-b)*self.population_size)):
+            while len(child)<self.population_size:
                 tournament_size = 3
                 parent1 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 while parent1 == parent2:
                     parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 child.append(self.crossover(parent1, parent2, crossover_type))
+        if len(child) > self.population_size:
+            child.pop()
         print(len(child))
         return child  # Return the new generation
 
