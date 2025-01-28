@@ -147,7 +147,7 @@ class GeneticOptimizer:
             parents = []
             liste = [x.getFitness() for x in population]
             poids_temp = liste[:]
-            for _ in range(self.population_size//2):
+            for _ in range(int(b*self.population_size)):
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
@@ -231,7 +231,7 @@ class GeneticOptimizer:
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="selection par roulette",type_matching="random",crossover_type=2)
 
         return self.best_solution  # Return the best solution found
 
