@@ -20,52 +20,52 @@ class GeneticOptimizer:
         # Get the directory where this script is located
         current_dir = os.path.dirname(os.path.abspath(__file__))
         table_path = os.path.join(current_dir, filename)
-        
+
         try:
             # Create a RotTable instance as the original table
             self.original_table = Individual(table_path)
             print(f"Successfully loaded table from: {table_path}")
         except FileNotFoundError:
             raise FileNotFoundError(f"Could not find {filename} at {table_path}")
-            
+
     def create_individual(self):
         """Create a mutated version of the original table"""
         new_table = Individual()
         # Appliquer des mutations aléatoires à tous les paramètres
         for dinucleotide in new_table.getTable():
-            new_table.addTwist(dinucleotide, np.random.uniform(-30, 30))
-            new_table.addWedge(dinucleotide, np.random.uniform(-30, 30))
-            new_table.addDirection(dinucleotide, np.random.uniform(-30, 30))
+            new_table.addTwist(dinucleotide, np.random.uniform(-50, 51))
+            new_table.addWedge(dinucleotide, np.random.uniform(-25, 26))
+            new_table.addDirection(dinucleotide, np.random.uniform(-100, 101))
         return new_table
-    
+
     def calculate_fitness(self, ind:Individual, sequence):
         """Calculate how circular the structure is"""
-        a = 0 # Réduction du poids de l'écart aux angles tabulés
+        w = 0 # Weight for the deviation from tabulated angles
         rot_table = RotTable()
         table = rot_table.getTable()
         ind_table = ind.getTable()
-        
+
         self.trajectoire.compute(sequence, ind)
-        
+
         # Get the coordinates
         coords = self.trajectoire.getTraj()
         self.trajectoire.reset()
-        
+
         # Calculate distance between start and end points
         start = np.array(coords[0])
         end = np.array(coords[-1])
         end_to_start = np.linalg.norm(end - start)
-        
-        # calcul de l'écart au angles tabulés
+
+        # calculate the deviation from tabulated angles
         norm = 0
         for key in ind_table:
             norm += (ind_table[key][0]-table[key][0])**2 + (ind_table[key][1]-table[key][1])**2 + (ind_table[key][2]-table[key][2])**2
         norm = np.sqrt(norm)/len(table)
-        
+
         # Combine metrics (we want to minimize both)
-        return end_to_start + a*norm
-    
-    def crossover(self, parent1, parent2, crossover_type=2):
+        return end_to_start + w*norm
+
+    def crossover(self, parent1:Individual, parent2:Individual, crossover_type=2):
         """Create a child by combining two parents"""
         child = copy.deepcopy(parent1)
         child.setCalculated(False)
@@ -83,20 +83,20 @@ class GeneticOptimizer:
         child.setTable(table)
         
         return self.mutate(child)
-    
+
     def mutate(self, individual:Individual):
         """Apply random mutations to an individual"""
         mutated = False
         while not mutated:  # S'assurer qu'au moins une mutation est appliquée
             for dinucleotide in individual.rot_table:
                 if np.random.random() < self.mutation_rate:
-                    individual.addTwist(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addTwist(dinucleotide, np.random.uniform(-40, 41))
                     mutated = True
                 if np.random.random() < self.mutation_rate:
-                    individual.addWedge(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addWedge(dinucleotide, np.random.uniform(-25, 26))
                     mutated = True
                 if np.random.random() < self.mutation_rate:
-                    individual.addDirection(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addDirection(dinucleotide, np.random.uniform(-90, 91))
                     mutated = True
         return individual
 

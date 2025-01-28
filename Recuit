@@ -1,11 +1,11 @@
 def simulated_annealing(self, table, sequence, kmax, emax, initial_temp):
     """
-        initial_table (dict): Table initiale recensant les angles et distances des liaisons.
+        initial_temp (dict): Table initiale recensant les températures initiales.
         kmax (int): Nombre maximum d'itérations.
         emax (float): Valeur seuil de fitness acceptable pour arrêter l'algorithme.
         initial_temp (float): Température initiale pour le recuit simulé.
-
     """
+    
     # Initialisation
     current_table = table.copy()
     current_fitness = calculate_fitness(self, sequence, current_table)

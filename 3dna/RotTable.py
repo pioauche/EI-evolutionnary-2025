@@ -35,6 +35,9 @@ class RotTable:
     def addDirection(self, dinucleotide: str, value: float):
         self.rot_table[dinucleotide][2] += value
     
+    def setTable(self, table: dict):
+        self.rot_table = table
+
     ###################
     # READING METHODS #
     ###################
@@ -46,9 +49,6 @@ class RotTable:
 
     def getDirection(self, dinucleotide: str) -> float:
         return self.getTable()[dinucleotide][2]
-
-    def setTable(self, table: dict):
-        self.rot_table = table
 
     def getTable(self) -> dict:
         return self.rot_table
