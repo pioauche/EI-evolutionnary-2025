@@ -1,39 +1,128 @@
-def simulated_annealing(self, table, sequence, kmax, emax, initial_temp):
-    """
-        initial_table (dict): Table initiale recensant les angles et distances des liaisons.
-        kmax (int): Nombre maximum d'itérations.
-        emax (float): Valeur seuil de fitness acceptable pour arrêter l'algorithme.
-        initial_temp (float): Température initiale pour le recuit simulé.
+import copy
+import pytest
+import random
+import math
+import numpy as np
 
+def simulated_annealing(self, ind, sequence, kmax, emax, initial_temp):
     """
-    # Initialisation
-    current_table = table.copy()
-    current_fitness = calculate_fitness(self, sequence, current_table)
-    best_table = current_table.copy()
+    ind : Individual
+        Matrice à optimiser.
+    kmax : int
+        Nombre maximum d'itérations du recuit simulé.
+    emax : float
+        Seuil de fitness : on arrête si on atteint ou si on est en dessous de cette valeur.
+    initial_temp : float
+        Température initiale du recuit simulé.
+    """
+
+    # On récupère la table actuelle depuis l'objet 'ind'
+    current_table = copy.deepcopy(ind.getTable())
+    # On calcule la fitness associée
+    current_fitness = self.calculate_fitness(ind, sequence)
+    
+    # On initialise les meilleurs résultats avec la situation de départ
+    best_table = copy.deepcopy(current_table)
     best_fitness = current_fitness
+    
     k = 0
-
     while k < kmax and current_fitness > emax:
-        # Générer un voisin en modifiant une valeur de la table
-        neighbor_table = current_table.copy()
-        key = random.choice(list(neighbor_table.keys()))  # Choisir une clé aléatoire
-        neighbor_table[key] += random.uniform(-1, 1)  # Modifier la valeur de manière aléatoire
-
-        # Calculer la fitness du voisin
-        neighbor_fitness = calculate_fitness(self, sequence, neighbor_table)
-
-        # Accepter ou rejeter le voisin
-        temperature = initial_temp * (1 - k / kmax)  # Fonction de refroidissement linéaire
-        if neighbor_fitness < current_fitness or random.random() < np.exp((current_fitness - neighbor_fitness) / temperature):
+        # 1) Générer un voisin en modifiant la table
+        
+        neighbor_table = copy.deepcopy(current_table)
+        # Choisir une clé (par exemple un type de liaison) au hasard
+        key = random.choice(list(neighbor_table.keys()))
+        
+        # Si chaque clé est associée à un tuple ou une liste de valeurs (ex: 3 angles),
+        # on peut modifier chaque composante :
+        for i in range(len(neighbor_table[key])):
+            neighbor_table[key][i] += random.uniform(-1.0, 1.0)
+        
+        # 2) Évaluer la fitness du voisin
+        # Pour cela, on peut créer un nouvel individu identique à 'ind' 
+        # puis lui affecter ce neighbor_table
+        new_ind = copy.deepcopy(ind)
+        new_ind.setTable(neighbor_table)
+        
+        neighbor_fitness = self.calculate_fitness(new_ind, sequence)
+        
+        # 3) Décider si on accepte le voisin
+        # Calcul de la température selon une décroissance linéaire
+        temperature = initial_temp * (1 - float(k) / float(kmax))
+        
+        # Critère d'acceptation : si c'est meilleur, on prend toujours,
+        # sinon on peut prendre avec une probabilité liée à la température
+        if (neighbor_fitness < current_fitness 
+            or random.random() < math.exp((current_fitness - neighbor_fitness) / temperature)):
+            
             current_table = neighbor_table
             current_fitness = neighbor_fitness
-
-            # Mise à jour du meilleur résultat
+            
+            # Mise à jour du meilleur résultat si on a trouvé mieux
             if current_fitness < best_fitness:
-                best_table = current_table.copy()
+                best_table = copy.deepcopy(current_table)
                 best_fitness = current_fitness
-
-        # Passer à l'itération suivante
+        
+        # On incrémente le compteur d'itérations
         k += 1
 
+    # Après la boucle de recuit, on peut également mettre à jour l'individu
+    # avec le meilleur résultat trouvé
+    ind.setTable(best_table)
+    
     return best_table
+
+import pytest
+import math
+import numpy as np
+
+
+class DummyIndividual:
+    def __init__(self, table):
+        self._table = table
+    def getTable(self):
+        return self._table
+    def setTable(self, new_table):
+        self._table = new_table
+
+class DummySelf:
+    def calculate_fitness(self, ind, sequence):
+        total = 0.0
+        for key in ind.getTable():
+            for val in ind.getTable()[key]:
+                total += val**2
+        return total
+
+
+def test_simulated_annealing_basic_run():
+    dummy_obj = DummySelf()
+    initial_table = {
+        'liaisonA': [5.0, -2.0, 3.0],
+        'liaisonB': [1.0,  4.0, -1.5]
+    }
+    ind = DummyIndividual(initial_table)
+    
+    # Paramètres
+    kmax = 50
+    emax = 0.01
+    initial_temp = 10
+    sequence = None  # Pas utilisé ici
+
+    initial_fitness = dummy_obj.calculate_fitness(ind, sequence)
+    
+    best_table = simulated_annealing(
+        self=dummy_obj,
+        ind=ind,
+        sequence=sequence,
+        kmax=kmax,
+        emax=emax,
+        initial_temp=initial_temp
+    )
+    
+    # Vérifications
+    assert isinstance(best_table, dict), "Le résultat doit être un dictionnaire"
+    final_fitness = dummy_obj.calculate_fitness(ind, sequence)
+    assert final_fitness <= initial_fitness, (
+        f"La fitness finale ({final_fitness}) devrait être inférieure ou égale à la fitness initiale ({initial_fitness})."
+    )
+
