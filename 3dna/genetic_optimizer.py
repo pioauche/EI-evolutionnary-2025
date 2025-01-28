@@ -242,6 +242,7 @@ class GeneticOptimizer:
 
             # Create the next generation
             population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=4)
+            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2)
 
         return self.best_solution  # Return the best solution found
 
