@@ -21,30 +21,33 @@ class GeneticOptimizer(Optimizer):
         # Apply random mutations to all parameters of the individual's table
         for dinucleotide in table:
             dinu = table[dinucleotide]
-            individu.setTwist(dinucleotide, np.random.normal(dinu[0],dinu[3]))
-            individu.setWedge(dinucleotide, np.random.normal(dinu[1],dinu[4]))
-            individu.setDirection(dinucleotide, np.random.normal(dinu[2],dinu[5]))
+            individu.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))
+            individu.setWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))
+            individu.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
         return individu
 
     def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2):
         """Create a child individual by combining two parents."""
-        child = copy.deepcopy(parent1)  # Start with a copy of the first parent
-        child.setCalculated(False)  # Mark as not calculated
-        table = child.getTable()  # Access the child's rotation table
-        crossover_model = self.__generate_random_tuple(crossover_type-1, self.pair)  # Generate crossover points
-        dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
-        
-        index = 0
-        for i, e in enumerate(crossover_model):
-            if np.random.random() < 0.5:
-                # Swap segments between parents based on crossover model
-                while index < e:
-                    dinucleotide = dinucleotides[index]
-                    table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
-                    index += 1
-            index = e  # Update index for the next segment
-        child.setTable(table)  # Update the child's table
-        
+        if test==True:
+            child = copy.deepcopy(parent1)
+        else:
+            child = copy.deepcopy(parent1)  # Start with a copy of the first parent
+            child.setCalculated(False)  # Mark as not calculated
+            table = child.getTable()  # Access the child's rotation table
+            crossover_model = self.__generate_random_tuple(crossover_type-1, self.pair)  # Generate crossover points
+            dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
+            
+            index = 0
+            for i, e in enumerate(crossover_model):
+                if np.random.random() < 0.5:
+                    # Swap segments between parents based on crossover model
+                    while index < e:
+                        dinucleotide = dinucleotides[index]
+                        table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
+                        index += 1
+                index = e  # Update index for the next segment
+            child.setTable(table)  # Update the child's table
+            
         return child  # Apply mutation to the child
 
     def mutate(self, individual: Individual):
@@ -54,11 +57,11 @@ class GeneticOptimizer(Optimizer):
         for dinucleotide in table:
             dinu = table[dinucleotide]
             if np.random.random() < self.mutation_rate:
-                individual.setTwist(dinucleotide, np.random.normal(dinu[0],dinu[3]))
+                individual.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))
             if np.random.random() < self.mutation_rate:
-                individual.setWedge(dinucleotide, np.random.normal(dinu[1],dinu[4]))
+                individual.setWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))
             if np.random.random() < self.mutation_rate:
-                individual.setDirection(dinucleotide, np.random.normal(dinu[2],dinu[5]))
+                individual.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
         
         return individual  # Return the mutated individual
 
@@ -83,7 +86,7 @@ class GeneticOptimizer(Optimizer):
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
-                seuil = random.normal(0, total)
+                seuil = random.uniform(0, total)
                 cumul = 0
                 for i, poids in enumerate(poids_temp):
                     cumul += poids
@@ -102,7 +105,7 @@ class GeneticOptimizer(Optimizer):
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
-                seuil = random.normal(0, total)
+                seuil = random.uniform(0, total)
                 cumul = 0
                 for i, poids in enumerate(poids_temp):
                     cumul += poids
