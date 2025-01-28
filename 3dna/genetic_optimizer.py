@@ -104,12 +104,21 @@ class GeneticOptimizer:
 
     def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
         """Create a new generation of individuals based on the current population"""
+        b=0.5 #proportion d'individus selectionnés
+        if type_choosing_parent == "tournoi":
+            parents=[]
+            populationbis = copy.deepcopy(population)
+            for i in range(int(b*self.population_size)):
+                tournament_size = 3
+                parent = min(np.random.choice(populationbis, tournament_size), key=lambda x: x.getFitness())
+                populationbis.remove(parent)
+                parents.append(parent)
         if type_choosing_parent == "selection par rang":
             parents = []
             population.sort(key=lambda x: x.getFitness())
             poids=[k+1 for k in range(self.population_size)]
             poids_temp = poids[:]  # Copie temporaire des poids
-            for _ in range(self.population_size//2):
+            for _ in range(int(b*self.population_size)):
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("Impossible de tirer plus d'indices : les poids sont épuisés.")
@@ -143,20 +152,18 @@ class GeneticOptimizer:
         if type_choosing_parent == "best":
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
-            parents = parents[:self.population_size//2]
+            parents = parents[:int(b*self.population_size)]
         child=copy.deepcopy(parents)
         if type_matching == "random":
-            for i in range(self.population_size//2):
+            for i in range(int(b*self.population_size)):
                 parent1 = parents[np.random.randint(0,len(parents))]
                 parent2 = parents[np.random.randint(0,len(parents))]
                 while parent1 == parent2:
                     parent2 = parents[np.random.randint(0,len(parents))]
                 child.append(self.crossover(parent1, parent2, crossover_type))
-            while len(child) > self.population_size:
-                child.pop()
         if type_matching == "tournament":
             # Tournament selection
-            for i in range(self.population_size//2):
+            for i in range(int(b*self.population_size)):
                 tournament_size = 3
                 parent1 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
