@@ -6,28 +6,12 @@ import os
 from .Traj3D import Traj3D
 from .RotTable import RotTable
 from .Individual import Individual
+from .Optimizer import Optimizer
 
-class GeneticOptimizer:
-    def __init__(self, population_size=50, mutation_rate=0.1):
+class GeneticOptimizer(Optimizer):
+    def __init__(self, generations=100, population_size=50, mutation_rate=0.1):
         # Initialize the genetic optimizer with population size and mutation rate
-        self.population_size = population_size  # Number of individuals in the population
-        self.mutation_rate = mutation_rate  # Probability of mutation per parameter
-        self.best_fitness = float('inf')  # Keep track of the best fitness score
-        self.best_solution = None  # Store the best solution found
-        self.trajectoire = Traj3D()  # Instance of Traj3D for trajectory calculations
-        self.pair = 16  # Number of dinucleotide pairs for crossover
-        self.ind_ref = Individual()
-    def load_table(self, filename="table.json"):
-        # Load the initial table from a JSON file
-        current_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory of the script
-        table_path = os.path.join(current_dir, filename)  # Full path to the table file
-        
-        try:
-            # Create a RotTable instance from the loaded file
-            self.original_table = Individual(table_path)
-            print(f"Successfully loaded table from: {table_path}")
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Could not find {filename} at {table_path}")
+        super().__init__(generations, population_size, mutation_rate)
 
     def create_individual(self):
         """Create a new individual with random mutations."""
@@ -42,36 +26,7 @@ class GeneticOptimizer:
             individu.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
         return individu
 
-    def calculate_fitness(self, ind: Individual, sequence: str):
-        """Calculate the fitness of an individual based on structural circularity."""
-        a = 0.2  # Weight factor for deviation from tabulated angles
-        rot_table = RotTable()  # Load the reference rotation table
-        table = rot_table.getTable()  # Get the reference table data
-        ind_table = ind.getTable()  # Get the individual's table data
-        
-        self.trajectoire.compute(sequence, ind)  # Compute the 3D trajectory based on the individual
-        
-        # Get the computed coordinates
-        coords = self.trajectoire.getTraj()
-        self.trajectoire.reset()  # Reset the trajectory for future calculations
-        
-        # Calculate the Euclidean distance between the start and end points of the trajectory
-        start = np.array(coords[0])
-        end = np.array(coords[-1])
-        end_to_start = np.linalg.norm(end - start)
-        
-        # Calculate the deviation from tabulated angles
-        norm = 0
-        for key in ind_table:
-            norm += (ind_table[key][0] - table[key][0])**2 + \
-                    (ind_table[key][1] - table[key][1])**2 + \
-                    (ind_table[key][2] - table[key][2])**2
-        norm = np.sqrt(norm) / len(table)
-        
-        # Return a combined fitness value (lower is better)
-        return end_to_start + a * norm
-
-    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2,test=False):
+    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2):
         """Create a child individual by combining two parents."""
         if test==True:
             child = copy.deepcopy(parent1)
@@ -239,26 +194,13 @@ class GeneticOptimizer:
 
             # Early stopping if no improvement for many generations
             if generations_without_improvement > 40:
-                print("Early stopping: No improvement for 20 generations")
+                print("Early stopping: No improvement for 40 generations")
                 break
 
             # Create the next generation
             population = self.create_new_gen(population,type_choosing_parent="selection par roulette",type_matching="random",crossover_type=2)
 
         return self.best_solution  # Return the best solution found
-
-    def save_solution(self, filename='optimized_table.json'):
-        """Save the best solution to a file."""
-        if self.best_solution:
-            # Save the table from the RotTable instance
-            with open(filename, 'w') as f:
-                json.dump(
-                    self.best_solution.getTable(), 
-                    f, 
-                    indent=4,  # Pretty-print the JSON
-                    default=lambda o: o.__dict__,
-                    separators=(',', ': ')  # Add spaces after separators for readability
-                )
 
     def __generate_random_tuple(self, n, N):
         """Generate a list of indexes for crossover of two parents."""
