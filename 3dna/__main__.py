@@ -37,4 +37,5 @@ def main():
 
 
 if __name__ == "__main__" :
+    #python3 -m 3dna data/plasmid_8k.fasta --optimize --generations 200 --population 100
     main()

@@ -30,17 +30,18 @@ class GeneticOptimizer:
             
     def create_individual(self):
         """Create a mutated version of the original table"""
-        new_table = Individual()
+        individu = Individual()
+        table = individu.getTable()
         # Appliquer des mutations aléatoires à tous les paramètres
-        for dinucleotide in new_table.getTable():
-            new_table.addTwist(dinucleotide, np.random.uniform(-30, 30))
-            new_table.addWedge(dinucleotide, np.random.uniform(-30, 30))
-            new_table.addDirection(dinucleotide, np.random.uniform(-30, 30))
-        return new_table
+        for dinucleotide in table:
+            individu.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
+            individu.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
+            individu.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
+        return individu
     
     def calculate_fitness(self, ind:Individual, sequence):
         """Calculate how circular the structure is"""
-        a = 0 # Réduction du poids de l'écart aux angles tabulés
+        a = 0.2 # Réduction du poids de l'écart aux angles tabulés
         rot_table = RotTable()
         table = rot_table.getTable()
         ind_table = ind.getTable()
@@ -87,48 +88,82 @@ class GeneticOptimizer:
     def mutate(self, individual:Individual):
         """Apply random mutations to an individual"""
         mutated = False
+        table = individual.getTable()
         while not mutated:  # S'assurer qu'au moins une mutation est appliquée
-            for dinucleotide in individual.rot_table:
+            for dinucleotide in table:
                 if np.random.random() < self.mutation_rate:
-                    individual.addTwist(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
                     mutated = True
                 if np.random.random() < self.mutation_rate:
-                    individual.addWedge(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
                     mutated = True
                 if np.random.random() < self.mutation_rate:
-                    individual.addDirection(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
                     mutated = True
         return individual
 
-    def create_new_gen(self, population, type_choosing_parent="tournament", type_matching="random", crossover_type=2):
+    def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
         """Create a new generation of individuals based on the current population"""
-        # Sort population by fitness
-        population.sort(key=lambda x: x.getFitness())
-        
-        # Keep the best 10% of individuals (elitism)
-        elite_size = max(1, self.population_size // 10)
-        new_population = copy.deepcopy(population[:elite_size])
-        
-        # Select parents and create offspring until we reach population_size
-        while len(new_population) < self.population_size:
-            if type_choosing_parent == "tournament":
-                # Tournament selection
+        if type_choosing_parent == "selection par rang":
+            parents = []
+            population.sort(key=lambda x: x.getFitness())
+            poids=[k+1 for k in range(self.population_size)]
+            poids_temp = poids[:]  # Copie temporaire des poids
+            for _ in range(self.population_size//2):
+                total = sum(poids_temp)
+                if total == 0:
+                    raise ValueError("Impossible de tirer plus d'indices : les poids sont épuisés.")
+                
+                seuil = random.uniform(0, total)
+                cumul = 0
+                for i, poids in enumerate(poids_temp):
+                    cumul += poids
+                    if seuil <= cumul:
+                        parents.append(population[i])  # Ajouter l'indice tiré
+                        poids_temp[i] = 0  # Réduire le poids à zéro (sans retour)
+                        break
+            
+        if type_choosing_parent == "selestion par roulette":
+            parents = []
+            liste=[x.getFitness() for x in population]
+            poids_temp = liste[:]  # Copie temporaire des poids
+            for _ in range(self.population_size//2):
+                total = sum(poids_temp)
+                if total == 0:
+                    raise ValueError("Impossible de tirer plus d'indices : les poids sont épuisés.")
+                
+                seuil = random.uniform(0, total)
+                cumul = 0
+                for i, poids in enumerate(poids_temp):
+                    cumul += poids
+                    if seuil <= cumul:
+                        parents.append(population[i])  # Ajouter l'indice tiré
+                        poids_temp[i] = 0  # Réduire le poids à zéro (sans retour)
+                        break
+        if type_choosing_parent == "best":
+            parents = copy.deepcopy(population)
+            parents.sort(key=lambda x: x.getFitness())
+            parents = parents[:self.population_size//2]
+        child=copy.deepcopy(parents)
+        if type_matching == "random":
+            for i in range(self.population_size//2):
+                parent1 = parents[np.random.randint(0,len(parents))]
+                parent2 = parents[np.random.randint(0,len(parents))]
+                while parent1 == parent2:
+                    parent2 = parents[np.random.randint(0,len(parents))]
+                child.append(self.crossover(parent1, parent2, crossover_type))
+            while len(child) > self.population_size:
+                child.pop()
+        if type_matching == "tournament":
+            # Tournament selection
+            for i in range(self.population_size//2):
                 tournament_size = 3
                 parent1 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 while parent1 == parent2:
                     parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
-            else:  # "best" selection
-                parent1 = population[np.random.randint(0, len(population) // 2)]
-                parent2 = population[np.random.randint(0, len(population) // 2)]
-                while parent1 == parent2:
-                    parent2 = population[np.random.randint(0, len(population) // 2)]
-            
-            # Create child through crossover and mutation
-            child = self.crossover(parent1, parent2, crossover_type)
-            new_population.append(child)
-        
-        return new_population
+                child.append(self.crossover(parent1, parent2, crossover_type))
+        return child
     
     def optimize(self, sequence, generations=100):
         """Run the genetic algorithm"""
@@ -173,7 +208,8 @@ class GeneticOptimizer:
                 
             # Create next generation
             population = self.create_new_gen(population)
-
+        for popo in population:
+            print(popo.getFitness())
         return self.best_solution
     
     def save_solution(self, filename='optimized_table.json'):

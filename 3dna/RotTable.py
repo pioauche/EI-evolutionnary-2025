@@ -12,28 +12,28 @@ class RotTable:
     def __init__(self, filename: str = None):
         if filename is None:
             filename = os_path.join(here, 'table copy.json')
-        self.rot_table = json_load(open(filename))
+        self.__rot_table = json_load(open(filename))
         
     ###################
     # WRITING METHODS #
     ###################
     def setTwist(self, dinucleotide: str, value: float):
-        self.rot_table[dinucleotide][0] = value
+        self.__rot_table[dinucleotide][0] = value
 
     def setWedge(self, dinucleotide: str, value: float):
-        self.rot_table[dinucleotide][1] = value
+        self.__rot_table[dinucleotide][1] = value
 
     def setDirection(self, dinucleotide: str, value: float):
-        self.rot_table[dinucleotide][2] = value
+        self.__rot_table[dinucleotide][2] = value
     
     def addTwist(self, dinucleotide: str, value: float):
-        self.rot_table[dinucleotide][0] += value
+        self.__rot_table[dinucleotide][0] += value
 
     def addWedge(self, dinucleotide: str, value: float):
-        self.rot_table[dinucleotide][1] += value
+        self.__rot_table[dinucleotide][1] += value
 
     def addDirection(self, dinucleotide: str, value: float):
-        self.rot_table[dinucleotide][2] += value
+        self.__rot_table[dinucleotide][2] += value
     
     ###################
     # READING METHODS #
@@ -48,9 +48,9 @@ class RotTable:
         return self.getTable()[dinucleotide][2]
 
     def setTable(self, table: dict):
-        self.rot_table = table
+        self.__rot_table = table
 
     def getTable(self) -> dict:
-        return self.rot_table
+        return self.__rot_table
 
     ###################
