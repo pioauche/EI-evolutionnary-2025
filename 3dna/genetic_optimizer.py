@@ -30,13 +30,14 @@ class GeneticOptimizer:
             
     def create_individual(self):
         """Create a mutated version of the original table"""
-        new_table = Individual()
+        individu = Individual()
+        table = individu.getTable()
         # Appliquer des mutations aléatoires à tous les paramètres
-        for dinucleotide in new_table.getTable():
-            new_table.addTwist(dinucleotide, np.random.uniform(-30, 30))
-            new_table.addWedge(dinucleotide, np.random.uniform(-30, 30))
-            new_table.addDirection(dinucleotide, np.random.uniform(-30, 30))
-        return new_table
+        for dinucleotide in table:
+            individu.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
+            individu.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
+            individu.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
+        return individu
     
     def calculate_fitness(self, ind:Individual, sequence):
         """Calculate how circular the structure is"""
@@ -87,16 +88,17 @@ class GeneticOptimizer:
     def mutate(self, individual:Individual):
         """Apply random mutations to an individual"""
         mutated = False
+        table = individual.getTable()
         while not mutated:  # S'assurer qu'au moins une mutation est appliquée
-            for dinucleotide in individual.rot_table:
+            for dinucleotide in table:
                 if np.random.random() < self.mutation_rate:
-                    individual.addTwist(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
                     mutated = True
                 if np.random.random() < self.mutation_rate:
-                    individual.addWedge(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
                     mutated = True
                 if np.random.random() < self.mutation_rate:
-                    individual.addDirection(dinucleotide, np.random.uniform(-30, 30))
+                    individual.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
                     mutated = True
         return individual
 
@@ -173,7 +175,8 @@ class GeneticOptimizer:
                 
             # Create next generation
             population = self.create_new_gen(population)
-
+        for popo in population:
+            print(popo.getFitness())
         return self.best_solution
     
     def save_solution(self, filename='optimized_table.json'):
