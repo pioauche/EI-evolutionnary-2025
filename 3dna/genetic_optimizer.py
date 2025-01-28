@@ -15,15 +15,15 @@ class GeneticOptimizer(Optimizer):
 
     def create_individual(self):
         """Create a new individual with random mutations."""
-        individu = Individual()  # Create a new individual instance
+        individu = Individual()
         table = individu.getTable()  # Get the individual's rotation table
         
         # Apply random mutations to all parameters of the individual's table
         for dinucleotide in table:
-            individu.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
-            individu.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
-            individu.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
-        
+            dinu = table[dinucleotide]
+            individu.setTwist(dinucleotide, np.random.normal(dinu[0],dinu[3]))
+            individu.setWedge(dinucleotide, np.random.normal(dinu[1],dinu[4]))
+            individu.setDirection(dinucleotide, np.random.normal(dinu[2],dinu[5]))
         return individu
 
     def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2):
@@ -45,25 +45,20 @@ class GeneticOptimizer(Optimizer):
             index = e  # Update index for the next segment
         child.setTable(table)  # Update the child's table
         
-        return self.mutate(child)  # Apply mutation to the child
+        return child  # Apply mutation to the child
 
     def mutate(self, individual: Individual):
         """Apply random mutations to an individual."""
-        mutated = False  # Track if any mutation occurred
-        table = individual.getTable()  # Access the individual's rotation table
-        
-        while not mutated:
-            # Ensure at least one mutation occurs
-            for dinucleotide in table:
-                if np.random.random() < self.mutation_rate:
-                    individual.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
-                    mutated = True
-                if np.random.random() < self.mutation_rate:
-                    individual.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
-                    mutated = True
-                if np.random.random() < self.mutation_rate:
-                    individual.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
-                    mutated = True
+        table = self.ind_ref.getTable()  # Get the individual's rotation table
+        # Ensure at least one mutation occurs
+        for dinucleotide in table:
+            dinu = table[dinucleotide]
+            if np.random.random() < self.mutation_rate:
+                individual.setTwist(dinucleotide, np.random.normal(dinu[0],dinu[3]))
+            if np.random.random() < self.mutation_rate:
+                individual.setWedge(dinucleotide, np.random.normal(dinu[1],dinu[4]))
+            if np.random.random() < self.mutation_rate:
+                individual.setDirection(dinucleotide, np.random.normal(dinu[2],dinu[5]))
         
         return individual  # Return the mutated individual
 
@@ -78,7 +73,7 @@ class GeneticOptimizer(Optimizer):
                 parent = min(np.random.choice(populationbis, tournament_size), key=lambda x: x.getFitness())
                 populationbis.remove(parent)
                 parents.append(parent)
-        if type_choosing_parent == "selection par rang":
+        elif type_choosing_parent == "selection par rang":
             # Rank-based selection of parents
             parents = []
             population.sort(key=lambda x: x.getFitness())
@@ -88,7 +83,7 @@ class GeneticOptimizer(Optimizer):
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
-                seuil = random.uniform(0, total)
+                seuil = random.normal(0, total)
                 cumul = 0
                 for i, poids in enumerate(poids_temp):
                     cumul += poids
@@ -97,7 +92,7 @@ class GeneticOptimizer(Optimizer):
                         poids_temp[i] = 0
                         break
 
-        if type_choosing_parent == "selection par roulette":
+        elif type_choosing_parent == "selection par roulette":
             # Roulette wheel selection
             parents = []
             liste=[x.getFitness() for x in population]
@@ -107,7 +102,7 @@ class GeneticOptimizer(Optimizer):
                 total = sum(poids_temp)
                 if total == 0:
                     raise ValueError("No weights left to select more parents.")
-                seuil = random.uniform(0, total)
+                seuil = random.normal(0, total)
                 cumul = 0
                 for i, poids in enumerate(poids_temp):
                     cumul += poids
@@ -116,7 +111,7 @@ class GeneticOptimizer(Optimizer):
                         poids_temp[i] = 0
                         break
 
-        if type_choosing_parent == "best":
+        elif type_choosing_parent == "best":
             # Select the best individuals as parents
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
@@ -129,7 +124,7 @@ class GeneticOptimizer(Optimizer):
                 while parent1 == parent2:
                     parent2 = parents[np.random.randint(0, len(parents))]
                 child.append(self.crossover(parent1, parent2, crossover_type))
-        if type_matching == "tournament":
+        elif type_matching == "tournament":
             # Tournament selection
             while len(child)<self.population_size:
                 tournament_size = 3
@@ -138,16 +133,27 @@ class GeneticOptimizer(Optimizer):
                 while parent1 == parent2:
                     parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 child.append(self.crossover(parent1, parent2, crossover_type))
+        elif type_matching == "meritocratie":
+            for i in range(len(parents)):
+                for j in range(i + 1, len(parents)):
+                    child1 = self.crossover(parents[i], parents[j], crossover_type)
+                    self.mutate(child1)
+                    child.append(child1)
+                    if len(child) >= self.population_size:
+                        break
         if len(child) > self.population_size:
             child.pop()
-        print(len(child))
+        for ind in child[1:]:#on permet a tous le mondde de muter sauf le premier
+
+            ind = self.mutate(ind)
         return child  # Return the new generation
 
     def optimize(self, sequence: str, generations=100):
         """Run the genetic algorithm."""
         # Initialize population with random individuals
         population = []
-        for i in range(self.population_size):
+        population.append(Individual())
+        for i in range(1,self.population_size):
             population.append(self.create_individual())
 
         best_fitness_history = []  # Track the best fitness over generations
@@ -177,7 +183,7 @@ class GeneticOptimizer(Optimizer):
                 generations_without_improvement += 1
             #mutation adaptative selon le nombre d'iterations sans amélioration
             if generations_without_improvement > 5:
-                self.mutation_rate = min(1.0, self.mutation_rate * 1.2)  # Augmente la mutation
+                self.mutation_rate = min(1.0, self.mutation_rate * 1.05)  # Augmente la mutation
             else:
                 self.mutation_rate = max(0.05, self.mutation_rate * 0.9)  # Réduit légèrement
             best_fitness_history.append(self.best_fitness)
@@ -189,7 +195,7 @@ class GeneticOptimizer(Optimizer):
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="selection par rang",type_matching="random",crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2)
 
         return self.best_solution  # Return the best solution found
 
