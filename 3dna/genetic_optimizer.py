@@ -243,7 +243,7 @@ class GeneticOptimizer:
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="sélection par roulette",type_matching="random",crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="selection par roulette",type_matching="random",crossover_type=2)
 
         return self.best_solution  # Return the best solution found
 
