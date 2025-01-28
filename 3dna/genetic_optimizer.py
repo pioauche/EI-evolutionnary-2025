@@ -16,7 +16,7 @@ class GeneticOptimizer:
         self.best_solution = None  # Store the best solution found
         self.trajectoire = Traj3D()  # Instance of Traj3D for trajectory calculations
         self.pair = 16  # Number of dinucleotide pairs for crossover
-
+        self.ind_ref = Individual()
     def load_table(self, filename="table.json"):
         # Load the initial table from a JSON file
         current_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory of the script
@@ -31,15 +31,15 @@ class GeneticOptimizer:
 
     def create_individual(self):
         """Create a new individual with random mutations."""
-        individu = Individual()  # Create a new individual instance
+        individu = Individual()
         table = individu.getTable()  # Get the individual's rotation table
         
         # Apply random mutations to all parameters of the individual's table
         for dinucleotide in table:
-            individu.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
-            individu.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
-            individu.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
-        
+            dinu = table[dinucleotide]
+            individu.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))
+            individu.addWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))
+            individu.addDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
         return individu
 
     def calculate_fitness(self, ind: Individual, sequence: str):
@@ -94,17 +94,16 @@ class GeneticOptimizer:
 
     def mutate(self, individual: Individual):
         """Apply random mutations to an individual."""
-        mutated = False  # Track if any mutation occurred
-        table = individual.getTable()  # Access the individual's rotation table
-        
+        table = self.ind_ref.getTable()  # Get the individual's rotation table
         # Ensure at least one mutation occurs
         for dinucleotide in table:
+            dinu = table[dinucleotide]
             if np.random.random() < self.mutation_rate:
-                individual.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
+                individual.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))
             if np.random.random() < self.mutation_rate:
-                individual.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
+                individual.addWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))
             if np.random.random() < self.mutation_rate:
-                individual.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
+                individual.addDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
         
         return individual  # Return the mutated individual
 
@@ -241,7 +240,6 @@ class GeneticOptimizer:
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=4)
             population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2)
 
         return self.best_solution  # Return the best solution found
