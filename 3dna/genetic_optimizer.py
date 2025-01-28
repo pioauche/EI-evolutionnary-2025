@@ -90,25 +90,21 @@ class GeneticOptimizer:
             index = e  # Update index for the next segment
         child.setTable(table)  # Update the child's table
         
-        return self.mutate(child)  # Apply mutation to the child
+        return child  # Apply mutation to the child
 
     def mutate(self, individual: Individual):
         """Apply random mutations to an individual."""
         mutated = False  # Track if any mutation occurred
         table = individual.getTable()  # Access the individual's rotation table
         
-        while not mutated:
-            # Ensure at least one mutation occurs
-            for dinucleotide in table:
-                if np.random.random() < self.mutation_rate:
-                    individual.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
-                    mutated = True
-                if np.random.random() < self.mutation_rate:
-                    individual.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
-                    mutated = True
-                if np.random.random() < self.mutation_rate:
-                    individual.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
-                    mutated = True
+        # Ensure at least one mutation occurs
+        for dinucleotide in table:
+            if np.random.random() < self.mutation_rate:
+                individual.addTwist(dinucleotide, np.random.uniform(-table[dinucleotide][3], table[dinucleotide][3]))
+            if np.random.random() < self.mutation_rate:
+                individual.addWedge(dinucleotide, np.random.uniform(-table[dinucleotide][4], table[dinucleotide][4]))
+            if np.random.random() < self.mutation_rate:
+                individual.addDirection(dinucleotide, np.random.uniform(-table[dinucleotide][5], table[dinucleotide][5]))
         
         return individual  # Return the mutated individual
 
@@ -123,7 +119,7 @@ class GeneticOptimizer:
                 parent = min(np.random.choice(populationbis, tournament_size), key=lambda x: x.getFitness())
                 populationbis.remove(parent)
                 parents.append(parent)
-        if type_choosing_parent == "selection par rang":
+        elif type_choosing_parent == "selection par rang":
             # Rank-based selection of parents
             parents = []
             population.sort(key=lambda x: x.getFitness())
@@ -142,7 +138,7 @@ class GeneticOptimizer:
                         poids_temp[i] = 0
                         break
 
-        if type_choosing_parent == "selection par roulette":
+        elif type_choosing_parent == "selection par roulette":
             # Roulette wheel selection
             parents = []
             liste=[x.getFitness() for x in population]
@@ -161,7 +157,7 @@ class GeneticOptimizer:
                         poids_temp[i] = 0
                         break
 
-        if type_choosing_parent == "best":
+        elif type_choosing_parent == "best":
             # Select the best individuals as parents
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
@@ -174,7 +170,7 @@ class GeneticOptimizer:
                 while parent1 == parent2:
                     parent2 = parents[np.random.randint(0, len(parents))]
                 child.append(self.crossover(parent1, parent2, crossover_type))
-        if type_matching == "tournament":
+        elif type_matching == "tournament":
             # Tournament selection
             while len(child)<self.population_size:
                 tournament_size = 3
@@ -183,16 +179,27 @@ class GeneticOptimizer:
                 while parent1 == parent2:
                     parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 child.append(self.crossover(parent1, parent2, crossover_type))
+        elif type_matching == "meritocratie":
+            for i in range(len(parents)):
+                for j in range(i + 1, len(parents)):
+                    child1 = self.crossover(parents[i], parents[j], crossover_type)
+                    self.mutate(child1)
+                    child.append(child1)
+                    if len(child) >= self.population_size:
+                        break
         if len(child) > self.population_size:
             child.pop()
-        print(len(child))
+        for ind in child[1:]:#on permet a tous le mondde de muter sauf le premier
+
+            ind = self.mutate(ind)
         return child  # Return the new generation
 
     def optimize(self, sequence: str, generations=100):
         """Run the genetic algorithm."""
         # Initialize population with random individuals
         population = []
-        for i in range(self.population_size):
+        population.append(Individual())
+        for i in range(1,self.population_size):
             population.append(self.create_individual())
 
         best_fitness_history = []  # Track the best fitness over generations
@@ -222,7 +229,7 @@ class GeneticOptimizer:
                 generations_without_improvement += 1
             #mutation adaptative selon le nombre d'iterations sans amélioration
             if generations_without_improvement > 5:
-                self.mutation_rate = min(1.0, self.mutation_rate * 1.2)  # Augmente la mutation
+                self.mutation_rate = min(1.0, self.mutation_rate * 1.05)  # Augmente la mutation
             else:
                 self.mutation_rate = max(0.05, self.mutation_rate * 0.9)  # Réduit légèrement
             best_fitness_history.append(self.best_fitness)
@@ -234,7 +241,7 @@ class GeneticOptimizer:
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="selection par rang",type_matching="random",crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=4)
 
         return self.best_solution  # Return the best solution found
 
