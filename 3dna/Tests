@@ -6,9 +6,7 @@ import unittest
 import random
 from .genetic_optimizer import GeneticOptimizer
 
-class GeneticOptimizer :
-    class Tests : 
-
+    class Tests(GeneticOptimizer): 
         def test_calculate_fitness():
             class MockRotTable:
                 def getTable(self):
