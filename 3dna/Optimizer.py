@@ -72,7 +72,7 @@ class Optimizer(ABC):
                 )
 
     @abstractmethod
-    def optimize(self, dna_sequence: str, generations=100):
+    def optimize(self, dna_sequence: str):
         pass
 
     @abstractmethod

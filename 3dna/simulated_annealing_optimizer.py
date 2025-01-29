@@ -31,7 +31,7 @@ class SimulatedAnnealingOptimizer(Optimizer):
         
         return individual
 
-    def optimize(self, dna_sequence:str, generations=100):
+    def optimize(self, dna_sequence:str):
         """
             initial_temp (dict): Table initiale recensant les températures initiales.
             kmax (int): Nombre maximum d'itérations.

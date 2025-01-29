@@ -151,7 +151,7 @@ class GeneticOptimizer(Optimizer):
             ind = self.mutate(ind)
         return child  # Return the new generation
 
-    def optimize(self, sequence: str, generations=100):
+    def optimize(self, sequence: str):
         """Run the genetic algorithm."""
         # Initialize population with random individuals
         population = []
@@ -162,7 +162,7 @@ class GeneticOptimizer(Optimizer):
         best_fitness_history = []  # Track the best fitness over generations
         generations_without_improvement = 0  # Track stagnation in progress
 
-        for gen in range(generations):
+        for gen in range(self.generations):
             # Evaluate fitness for each individual
             current_best_fitness = float('inf')
             best_individual = None

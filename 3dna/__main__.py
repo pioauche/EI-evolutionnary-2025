@@ -20,9 +20,9 @@ def main():
     if args.optimize:
         # # Genetic optimization
         # print("Running genetic optimization...")
-        # optimizer = GeneticOptimizer(population_size=args.population)
+        # optimizer = GeneticOptimizer(population_size=args.population, generations=args.generations)
         # optimizer.load_table()
-        # optimized_table = optimizer.optimize(dna_sequence, generations=args.generations)
+        # optimized_table = optimizer.optimize(dna_sequence)
         # optimizer.save_solution('optimized_table.json')
         
         # # Use optimized table
@@ -30,9 +30,9 @@ def main():
 
         # Annealing optimization
         print("Running annealing optimization...")
-        optimizer1 = SimulatedAnnealingOptimizer(population_size=args.population)
+        optimizer1 = SimulatedAnnealingOptimizer(population_size=args.population, generations=args.generations)
         optimizer1.load_table()
-        optimized_table1 = optimizer1.optimize(dna_sequence, generations=args.generations)
+        optimized_table1 = optimizer1.optimize(dna_sequence)
         optimizer1.save_solution('optimized_table1.json')
         
         # Use optimized table
