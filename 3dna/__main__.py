@@ -21,7 +21,7 @@ def main():
         optimizer = GeneticOptimizer(population_size=args.population)
         optimizer.load_table()
         optimized_table = optimizer.optimize(seq, generations=args.generations)
-        optimizer.save_solution('optimized_table.json')
+        optimized_table.save_solution('optimized_table.json')
         
         # Use optimized table
         rot_table = RotTable('optimized_table.json')

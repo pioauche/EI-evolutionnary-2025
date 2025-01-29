@@ -8,7 +8,7 @@ from .RotTable import RotTable
 from .Individual import Individual
 
 class GeneticOptimizer:
-    def __init__(self, population_size=50, mutation_rate=0.1):
+    def __init__(self, population_size=50, mutation_rate=0.2):
         # Initialize the genetic optimizer with population size and mutation rate
         self.population_size = population_size  # Number of individuals in the population
         self.mutation_rate = mutation_rate  # Probability of mutation per parameter
@@ -74,7 +74,18 @@ class GeneticOptimizer:
     def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2,test=False):
         """Create a child individual by combining two parents."""
         if test==True:
-            child = copy.deepcopy(parent1)
+            child = copy.deepcopy(parent1)  # Start with a copy of the first parent
+            child.setCalculated(False)  # Mark as not calculated
+            table = child.getTable()  # Access the child's rotation table
+            parent2_table = parent2.getTable()  # Access parent2's table
+            dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
+
+            # Uniform crossover: for each key, randomly choose from parent1 or parent2
+            for dinucleotide in dinucleotides:
+                alpha = np.random.random()  # Alpha entre 0 et 1
+                for i in range(3):
+                    table[dinucleotide][i] = alpha * parent1.getTable()[dinucleotide][i] + (1 - alpha) * parent2_table[dinucleotide][i]            
+            child.setTable(table)  # Update the child's table
         else:
             child = copy.deepcopy(parent1)  # Start with a copy of the first parent
             child.setCalculated(False)  # Mark as not calculated
@@ -110,7 +121,7 @@ class GeneticOptimizer:
         
         return individual  # Return the mutated individual
 
-    def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
+    def create_new_gen(self, population,gen, type_choosing_parent="best", type_matching="random", crossover_type=2,):
         """Create a new generation of individuals based on the current population"""
         b=0.25 #proportion d'individus selectionnés
         if type_choosing_parent == "tournoi":
@@ -164,7 +175,11 @@ class GeneticOptimizer:
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:int(b*self.population_size)]
+        if gen >10:
+            for i in range(len(parents) // 4):  # Remplace 25% de la population
+                population[len(parents)-i] = self.create_individual()
         child=copy.deepcopy(parents)
+
         if type_matching == "random":
             while len(child)<self.population_size:
                 parent1 = parents[np.random.randint(0,len(parents))]
@@ -191,8 +206,7 @@ class GeneticOptimizer:
                         break
         if len(child) > self.population_size:
             child.pop()
-        for ind in child[1:]:#on permet a tous le mondde de muter sauf le premier
-
+        for ind in child[int(0.1*self.population_size):]:#on permet a tous le mondde de muter sauf les 10% meilleurs
             ind = self.mutate(ind)
         return child  # Return the new generation
 
@@ -230,20 +244,20 @@ class GeneticOptimizer:
             else:
                 generations_without_improvement += 1
             #mutation adaptative selon le nombre d'iterations sans amélioration
-            if generations_without_improvement > 5:
+            """if generations_without_improvement > 5:
                 self.mutation_rate = min(1.0, self.mutation_rate * 1.05)  # Augmente la mutation
             else:
-                self.mutation_rate = max(0.05, self.mutation_rate * 0.9)  # Réduit légèrement
+                self.mutation_rate = max(0.05, self.mutation_rate * 0.9)  # Réduit légèrement"""
             best_fitness_history.append(self.best_fitness)
             print(f"Generation {gen}: Best fitness = {self.best_fitness}, Avg fitness = {sum(ind.getFitness() for ind in population)/len(population):.2f}")
 
             # Early stopping if no improvement for many generations
-            if generations_without_improvement > 40:
+            if generations_without_improvement > 400:
                 print("Early stopping: No improvement for 20 generations")
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2,gen=generations_without_improvement)
 
         return self.best_solution  # Return the best solution found
 
