@@ -19,21 +19,21 @@ def main():
     dna_sequence = ''.join(lineList[1:])
     if args.optimize:
         # # Genetic optimization
-        # print("Running genetic optimization...")
-        # optimizer = GeneticOptimizer(population_size=args.population)
-        # optimizer.load_table()
-        # optimized_table = optimizer.optimize(dna_sequence, generations=args.generations)
-        # optimizer.save_solution('optimized_table.json')
+        print("Running genetic optimization...")
+        optimizer = GeneticOptimizer(population_size=args.population)
+        optimizer.load_table()
+        optimized_table = optimizer.optimize(dna_sequence, generations=args.generations)
+        optimizer.save_solution('optimized_table.json')
         
         # # Use optimized table
-        # rot_table = RotTable('optimized_table.json')
+        rot_table = RotTable('optimized_table.json')
 
-        # Annealing optimization
-        print("Running annealing optimization...")
+        #Annealing optimization
+        """print("Running annealing optimization...")
         optimizer1 = SimulatedAnnealingOptimizer(population_size=args.population)
         optimizer1.load_table()
         optimized_table1 = optimizer1.optimize(dna_sequence, generations=args.generations)
-        optimizer1.save_solution('optimized_table1.json')
+        optimizer1.save_solution('optimized_table1.json')"""
         
         # Use optimized table
         rot_table1 = RotTable('optimized_table1.json')
@@ -48,8 +48,9 @@ def main():
     # traj.write(args.filename+".png")
 
     traj1 = Traj3D()
-    traj1.compute(dna_sequence, rot_table1)
+    traj1.compute(dna_sequence, rot_table)
     traj1.draw()
+    traj1.write("solution.png")
 
 
 if __name__ == "__main__" :

@@ -26,7 +26,7 @@ class GeneticOptimizer(Optimizer):
             individu.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
         return individu
 
-    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2):
+    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2,test=False):
         """Create a child individual by combining two parents."""
         if test==True:
             child = copy.deepcopy(parent1)  # Start with a copy of the first parent
@@ -130,7 +130,7 @@ class GeneticOptimizer(Optimizer):
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:int(b*self.population_size)]
-        if gen >10:
+        if gen >10  and np.random.random() < 0.15:
             for i in range(len(parents) // 4):  # Remplace 25% de la population
                 population[len(parents)-i] = self.create_individual()
         child=copy.deepcopy(parents)
@@ -184,7 +184,8 @@ class GeneticOptimizer(Optimizer):
             for individual in population:
                 if not individual.isCalculated():
                     fitness = self.calculate_fitness(individual, sequence)
-                    individual.setFitness(fitness)
+                    
+                    individual.setFitness(fitness[0])
                     individual.setCalculated(True)
 
                 if individual.getFitness() < current_best_fitness:
@@ -194,6 +195,7 @@ class GeneticOptimizer(Optimizer):
             # Update best solution if a better one is found
             if current_best_fitness < self.best_fitness:
                 self.best_fitness = current_best_fitness
+                self.__distance = fitness[1]
                 self.best_solution = copy.deepcopy(best_individual)
                 generations_without_improvement = 0
             else:
@@ -204,7 +206,7 @@ class GeneticOptimizer(Optimizer):
             else:
                 self.mutation_rate = max(0.05, self.mutation_rate * 0.9)  # Réduit légèrement"""
             best_fitness_history.append(self.best_fitness)
-            print(f"Generation {gen}: Best fitness = {self.best_fitness}, Avg fitness = {sum(ind.getFitness() for ind in population)/len(population):.2f}")
+            print(f"Generation {gen}: Best fitness = {self.best_fitness}, Distance = {self.__distance:.2f}")
 
             # Early stopping if no improvement for many generations
             if generations_without_improvement > 40:
@@ -224,3 +226,12 @@ class GeneticOptimizer(Optimizer):
         random_numbers.sort()  # Sort indices in ascending order
         random_numbers = list(random_numbers)
         return random_numbers + [N] if random_numbers[-1] != N else random_numbers
+    
+
+
+
+
+
+
+
+    
