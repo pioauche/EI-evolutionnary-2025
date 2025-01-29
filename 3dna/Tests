@@ -4,9 +4,10 @@ import copy
 import os
 import unittest
 import random
+from .Individual import Individual
 from .genetic_optimizer import GeneticOptimizer
 
-    class Tests(GeneticOptimizer): 
+class Tests(GeneticOptimizer): 
         def test_calculate_fitness():
             class MockRotTable:
                 def getTable(self):
@@ -170,14 +171,14 @@ from .genetic_optimizer import GeneticOptimizer
                 )
                 self.assertEqual(len(new_generation), self.population_size)
             
-            def test_selestion_par_roulette_random(self):
+            def test_selection_par_roulette_random(self):
                 """
-                Test de la méthode create_new_gen avec type_choosing_parent='selestion par roulette' (coquille volontaire)
+                Test de la méthode create_new_gen avec type_choosing_parent='selection par roulette'
                 et type_matching='random'.
                 """
                 new_generation = self.ga.create_new_gen(
                     population=self.population,
-                    type_choosing_parent="selestion par roulette",
+                    type_choosing_parent="selection par roulette",
                     type_matching="random",
                     crossover_type=2
                 )
