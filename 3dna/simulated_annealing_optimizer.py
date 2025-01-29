@@ -43,6 +43,7 @@ class SimulatedAnnealingOptimizer(Optimizer):
         current_fitness = self.calculate_fitness(current_individual, dna_sequence)
         self.best_solution = copy.deepcopy(current_individual)
         self.best_fitness = current_fitness
+        print(f"Initial fitness: {current_fitness}")
         k = 0
 
         while k < self.kmax and current_fitness > self.emax:
@@ -63,7 +64,7 @@ class SimulatedAnnealingOptimizer(Optimizer):
                 self.best_solution = copy.deepcopy(current_individual)
                 self.best_fitness = current_fitness
 
-            if k % 100 == 0:
+            if k % 10 == 0:
                 print(f"Best fitness: {self.best_fitness} for iteration {k}")
 
             # Passer à l'itération suivante

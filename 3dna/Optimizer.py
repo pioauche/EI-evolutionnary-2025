@@ -17,7 +17,7 @@ class Optimizer(ABC):
         self.best_solution = None                   # Store the best solution found
         self.best_fitness = float('inf')            # Keep track of the best fitness score
 
-    def load_table(self, filename="table.json"):
+    def load_table(self, filename="optimized_table1.json"):
         # Load the initial table from a JSON file
         current_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory of the script
         table_path = os.path.join(current_dir, filename)  # Full path to the table file
@@ -58,7 +58,7 @@ class Optimizer(ABC):
         # Return a combined fitness value (lower is better)
         return end_to_start + a * norm
 
-    def save_solution(self, filename='optimized_table.json'):
+    def save_solution(self, filename='table.json'):
         """Save the best solution to a file."""
         if self.best_solution:
             # Save the table from the RotTable instance
