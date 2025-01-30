@@ -8,6 +8,8 @@ from RotTable import RotTable
 from Individual import Individual
 
 class Optimizer(ABC):
+    """Abstract base class for optimization algorithms. Subclasses must implement the optimize and mutate methods."""
+
     def __init__(self, generations=100, population_size=50, mutation_rate=0.1):
         self.__generations = generations              # Number of generations
         self.__population_size = population_size      # Number of individuals in the population
@@ -16,6 +18,7 @@ class Optimizer(ABC):
         self.__pair = 16                              # Number of dinucleotide pairs for crossover
         self.__best_solution = None                   # Store the best solution found
         self.__best_fitness = float('inf')            # Keep track of the best fitness score
+
     ###################
     # WRITING METHODS #
     ###################
@@ -45,10 +48,12 @@ class Optimizer(ABC):
         return self.__trajectoire
     def getIndRef(self) -> Individual:
         return self.__ind_ref
+        
     def load_table(self, filename="table.json"):
-        # Load the initial table from a JSON file
-        current_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory of the script
-        table_path = os.path.join(current_dir, filename)  # Full path to the table file
+        """Load the initial table from a JSON file"""
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))    # Current directory of the script
+        table_path = os.path.join(current_dir, filename)            # Full path to the table file
         
         try:
             # Create a RotTable instance from the loaded file
@@ -92,7 +97,7 @@ class Optimizer(ABC):
 """
         return (end_to_start + a * norm,distance)
 
-    def save_solution(self, filename='optimized_table.json'):
+    def save_solution(self, filename='table.json'):
         """Save the best solution to a file."""
         if self.__best_solution:
             # Save the table from the RotTable instance
@@ -106,9 +111,9 @@ class Optimizer(ABC):
                 )
 
     @abstractmethod
-    def optimize(self, dna_sequence: str, generations=100):
+    def optimize(self, dna_sequence: str): # -> Individual - Returns the best solution found
         pass
 
     @abstractmethod
-    def mutate(self, ind: Individual):
+    def mutate(self, ind: Individual): # -> Individual - Returns the mutated individual
         pass

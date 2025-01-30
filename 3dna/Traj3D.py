@@ -8,7 +8,7 @@ from RotTable import RotTable
 
 
 class Traj3D:
-    """Represents a 3D trajectory"""
+    """Represents a 3D trajectory. Contains the 3D coordinates of the DNA molecule."""
 
     # Vertical translation (elevation) between two di-nucleotides
     __MATRIX_T = np.array(
