@@ -27,26 +27,40 @@ class GeneticOptimizer(Optimizer):
             individu.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
         return individu
 
-    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2):
+    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2,test=False):
         """Create a child individual by combining two parents."""
-        child = copy.deepcopy(parent1)  # Start with a copy of the first parent
-        child.setCalculated(False)  # Mark as not calculated
-        table = child.getTable()  # Access the child's rotation table
-        crossover_model = self.__generate_random_tuple(crossover_type-1, self.pair)  # Generate crossover points
-        dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
-        
-        index = 0
-        for i, e in enumerate(crossover_model):
-            if np.random.random() < 0.5:
-                # Swap segments between parents based on crossover model
-                while index < e:
-                    dinucleotide = dinucleotides[index]
-                    table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
-                    index += 1
-            index = e  # Update index for the next segment
-        child.setTable(table)  # Update the child's table
-        
-        return child
+        if test==True:
+            child = copy.deepcopy(parent1)  # Start with a copy of the first parent
+            child.setCalculated(False)  # Mark as not calculated
+            table = child.getTable()  # Access the child's rotation table
+            parent2_table = parent2.getTable()  # Access parent2's table
+            dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
+
+            # Uniform crossover: for each key, randomly choose from parent1 or parent2
+            for dinucleotide in dinucleotides:
+                alpha = np.random.random()  # Alpha entre 0 et 1
+                for i in range(3):
+                    table[dinucleotide][i] = alpha * parent1.getTable()[dinucleotide][i] + (1 - alpha) * parent2_table[dinucleotide][i]            
+            child.setTable(table)  # Update the child's table
+        else:
+            child = copy.deepcopy(parent1)  # Start with a copy of the first parent
+            child.setCalculated(False)  # Mark as not calculated
+            table = child.getTable()  # Access the child's rotation table
+            crossover_model = self.__generate_random_tuple(crossover_type-1, self.pair)  # Generate crossover points
+            dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
+            
+            index = 0
+            for i, e in enumerate(crossover_model):
+                if np.random.random() < 0.5:
+                    # Swap segments between parents based on crossover model
+                    while index < e:
+                        dinucleotide = dinucleotides[index]
+                        table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
+                        index += 1
+                index = e  # Update index for the next segment
+            child.setTable(table)  # Update the child's table
+            
+        return child  # Apply mutation to the child
 
     def mutate(self, individual: Individual):
         """Apply random mutations to an individual."""
@@ -63,7 +77,7 @@ class GeneticOptimizer(Optimizer):
         
         return individual  # Return the mutated individual
 
-    def create_new_gen(self, population, type_choosing_parent="best", type_matching="random", crossover_type=2):
+    def create_new_gen(self, population,gen, type_choosing_parent="best", type_matching="random", crossover_type=2,):
         """Create a new generation of individuals based on the current population"""
         b=0.25 #proportion d'individus selectionnés
         if type_choosing_parent == "tournoi":
@@ -117,7 +131,11 @@ class GeneticOptimizer(Optimizer):
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:int(b*self.population_size)]
+        if gen >10  and np.random.random() < 0.15:
+            for i in range(len(parents) // 4):  # Remplace 25% de la population
+                population[len(parents)-i] = self.create_individual()
         child=copy.deepcopy(parents)
+
         if type_matching == "random":
             while len(child)<self.population_size:
                 parent1 = parents[np.random.randint(0,len(parents))]
@@ -144,8 +162,7 @@ class GeneticOptimizer(Optimizer):
                         break
         if len(child) > self.population_size:
             child.pop()
-        for ind in child[1:]:#on permet a tous le mondde de muter sauf le premier
-
+        for ind in child[int(0.1*self.population_size):]:#on permet a tous le mondde de muter sauf les 10% meilleurs
             ind = self.mutate(ind)
         return child  # Return the new generation
 
@@ -168,7 +185,8 @@ class GeneticOptimizer(Optimizer):
             for individual in population:
                 if not individual.isCalculated():
                     fitness = self.calculate_fitness(individual, sequence)
-                    individual.setFitness(fitness)
+                    
+                    individual.setFitness(fitness[0])
                     individual.setCalculated(True)
 
                 if individual.getFitness() < current_best_fitness:
@@ -178,17 +196,18 @@ class GeneticOptimizer(Optimizer):
             # Update best solution if a better one is found
             if current_best_fitness < self.best_fitness:
                 self.best_fitness = current_best_fitness
+                self.__distance = fitness[1]
                 self.best_solution = copy.deepcopy(best_individual)
                 generations_without_improvement = 0
             else:
                 generations_without_improvement += 1
             #mutation adaptative selon le nombre d'iterations sans amélioration
-            if generations_without_improvement > 5:
+            """if generations_without_improvement > 5:
                 self.mutation_rate = min(1.0, self.mutation_rate * 1.05)  # Augmente la mutation
             else:
-                self.mutation_rate = max(0.05, self.mutation_rate * 0.9)  # Réduit légèrement
+                self.mutation_rate = max(0.05, self.mutation_rate * 0.9)  # Réduit légèrement"""
             best_fitness_history.append(self.best_fitness)
-            print(f"Generation {gen}: Best fitness = {self.best_fitness}, Avg fitness = {sum(ind.getFitness() for ind in population)/len(population):.2f}")
+            print(f"Generation {gen}: Best fitness = {self.best_fitness}, Distance = {self.__distance:.2f}")
 
             # Early stopping if no improvement for many generations
             if generations_without_improvement > 40:
@@ -196,7 +215,7 @@ class GeneticOptimizer(Optimizer):
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2)
+            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2,gen=generations_without_improvement)
 
         return self.best_solution  # Return the best solution found
 
@@ -208,3 +227,12 @@ class GeneticOptimizer(Optimizer):
         random_numbers.sort()  # Sort indices in ascending order
         random_numbers = list(random_numbers)
         return random_numbers + [N] if random_numbers[-1] != N else random_numbers
+    
+
+
+
+
+
+
+
+    

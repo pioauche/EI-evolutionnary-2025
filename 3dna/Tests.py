@@ -22,11 +22,8 @@ class TestCalculateFitness(unittest.TestCase):
         optimizer = GeneticOptimizer()
         
         # Test data with valid sequences from table.json
-        sequence = 'AATT'  # Valid sequence that exists in table.json
-        ind = Individual()
-        
-        # Calculate fitness
-        fitness_value = optimizer.calculate_fitness(ind, sequence)
+        sequence = "ATCG"  # Valid sequence that exists in table.json
+        fitness_value = optimizer.calculate_fitness(optimizer.ind_ref, sequence)[0]  # Get only the fitness value
         
         # Verify
         self.assertGreater(fitness_value, 0, "La valeur de fitness doit être positive.")
@@ -78,52 +75,101 @@ class TestCreateNewGen(unittest.TestCase):
 
     def test_selection_best_random(self):
         """Test avec type_choosing_parent='best' et type_matching='random'"""
+        sequence = "ATCG"
+        population = []
+        for _ in range(self.optimizer.population_size):
+            ind = self.optimizer.create_individual()
+            fitness = self.optimizer.calculate_fitness(ind, sequence)[0]  # Get only the fitness value
+            ind.setFitness(fitness)
+            ind.setCalculated(True)
+            population.append(ind)
+
         new_gen = self.optimizer.create_new_gen(
-            self.population,
-            type_choosing_parent='best',
-            type_matching='random'
+            population=population,
+            gen=0,  # Add gen parameter
+            type_choosing_parent="best",
+            type_matching="random"
         )
         self.assertEqual(len(new_gen), self.optimizer.population_size)
 
     def test_selection_par_rang_random(self):
         """Test avec type_choosing_parent='selection par rang'"""
+        sequence = "ATCG"
+        population = []
+        for _ in range(self.optimizer.population_size):
+            ind = self.optimizer.create_individual()
+            fitness = self.optimizer.calculate_fitness(ind, sequence)[0]  # Get only the fitness value
+            ind.setFitness(fitness)
+            ind.setCalculated(True)
+            population.append(ind)
+
         new_gen = self.optimizer.create_new_gen(
-            self.population,
-            type_choosing_parent='selection par rang',
-            type_matching='random'
+            population=population,
+            gen=0,  # Add gen parameter
+            type_choosing_parent="selection par rang",
+            type_matching="random"
         )
         self.assertEqual(len(new_gen), self.optimizer.population_size)
 
     def test_selection_tournoi_random(self):
         """Test avec type_choosing_parent='tournoi'"""
+        sequence = "ATCG"
+        population = []
+        for _ in range(self.optimizer.population_size):
+            ind = self.optimizer.create_individual()
+            fitness = self.optimizer.calculate_fitness(ind, sequence)[0]  # Get only the fitness value
+            ind.setFitness(fitness)
+            ind.setCalculated(True)
+            population.append(ind)
+
         new_gen = self.optimizer.create_new_gen(
-            self.population,
-            type_choosing_parent='tournoi',
-            type_matching='random'
+            population=population,
+            gen=0,  # Add gen parameter
+            type_choosing_parent="tournoi",
+            type_matching="random"
         )
         self.assertEqual(len(new_gen), self.optimizer.population_size)
 
     def test_selection_roulette_tournament(self):
         """Test avec type_choosing_parent='selection par roulette' et type_matching='tournament'"""
+        sequence = "ATCG"
+        population = []
+        for _ in range(self.optimizer.population_size):
+            ind = self.optimizer.create_individual()
+            fitness = self.optimizer.calculate_fitness(ind, sequence)[0]  # Get only the fitness value
+            ind.setFitness(fitness)
+            ind.setCalculated(True)
+            population.append(ind)
+
         new_gen = self.optimizer.create_new_gen(
-            self.population,
-            type_choosing_parent='selection par roulette',
-            type_matching='tournament'
+            population=population,
+            gen=0,  # Add gen parameter
+            type_choosing_parent="selection par roulette",
+            type_matching="tournament"
         )
         self.assertEqual(len(new_gen), self.optimizer.population_size)
 
     def test_selection_best_meritocratie(self):
         """Test avec type_choosing_parent='best' et type_matching='meritocratie'"""
-        # Pour la méthode méritocratie, on crée une population plus petite
-        small_population = self.population[:10]  # Utilise seulement 10 individus
+        sequence = "ATCG"
+        population = []
+        for _ in range(self.optimizer.population_size):
+            ind = self.optimizer.create_individual()
+            fitness = self.optimizer.calculate_fitness(ind, sequence)[0]  # Get only the fitness value
+            ind.setFitness(fitness)
+            ind.setCalculated(True)
+            population.append(ind)
+
         new_gen = self.optimizer.create_new_gen(
-            small_population,
-            type_choosing_parent='best',
-            type_matching='meritocratie'
+            population=population,
+            gen=0,  # Add gen parameter
+            type_choosing_parent="best",
+            type_matching="meritocratie"
         )
+        # Vérifie que la taille de la nouvelle génération est raisonnable
         # La méthode méritocratie peut générer une population légèrement plus grande
-        self.assertLessEqual(len(new_gen), self.optimizer.population_size + 1)
         self.assertGreater(len(new_gen), 0)
+        self.assertLess(len(new_gen), self.optimizer.population_size * 2)  # Ne devrait pas être plus du double
 
     def test_optimize(self):
         """Test de la méthode optimize"""

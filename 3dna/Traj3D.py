@@ -45,7 +45,6 @@ class Traj3D:
             if dinucleotide not in matrices_Rz:
                 matrices_Rz[dinucleotide], matrices_Q[dinucleotide] = \
                     self.__compute_matrices(rot_table, dinucleotide)
-
             # On calcule les transformations géométriques
             # selon le dinucleotide courant,
             # et on les ajoute à la matrice totale
@@ -56,11 +55,11 @@ class Traj3D:
                 @ matrices_Q[dinucleotide] \
                 @ matrices_Rz[dinucleotide] \
                 @ self.__MATRIX_T
-
             # On calcule la position du nucléotide courant
             # en appliquant toutes les transformations géométriques
             # à la position du premier nucléotide
             self.__Traj3D.append(total_matrix @ self.__Traj3D[0])
+
     def reset(self):
         self.__Traj3D = []
 

@@ -29,34 +29,40 @@ class Optimizer(ABC):
         except FileNotFoundError:
             raise FileNotFoundError(f"Could not find {filename} at {table_path}")
         
-    def calculate_fitness(self, ind: Individual, dna_sequence: str):
-        """Calculate the fitness of an individual based on structural circularity."""
-        a = 0.2  # Weight factor for deviation from tabulated angles
-        rot_table = RotTable()  # Load the reference rotation table
-        table = rot_table.getTable()  # Get the reference table data
-        ind_table = ind.getTable()  # Get the individual's table data
-        
-        self.trajectoire.compute(dna_sequence, ind)  # Compute the 3D trajectory based on the individual
-        
-        # Get the computed coordinates
-        coords = self.trajectoire.getTraj()
-        self.trajectoire.reset()  # Reset the trajectory for future calculations
-        
-        # Calculate the Euclidean distance between the start and end points of the trajectory
-        start = np.array(coords[0])
-        end = np.array(coords[-1])
+    def calculate_fitness(self, ind, sequence: str):
+        """Calculate the fitness function with normalizations and penalties."""
+        a = 0.2  # Initial weight for angle deviation
+        rot_table = RotTable()
+        table = rot_table.getTable()
+        ind_table = ind.getTable()
+
+        self.trajectoire.compute(sequence, ind)
+        start, end = self.trajectoire.getTraj()[0], self.trajectoire.getTraj()[-1]
         end_to_start = np.linalg.norm(end - start)
-        
-        # Calculate the deviation from tabulated angles
-        norm = 0
-        for key in ind_table:
-            norm += (ind_table[key][0] - table[key][0])**2 + \
-                    (ind_table[key][1] - table[key][1])**2 + \
-                    (ind_table[key][2] - table[key][2])**2
+        distance = end_to_start
+        # Compute deviation from tabulated angles
+        norm = sum(
+            (ind_table[key][0] - table[key][0])**2 +
+            (ind_table[key][1] - table[key][1])**2 +
+            (ind_table[key][2] - table[key][2])**2
+            for key in ind_table
+        )
         norm = np.sqrt(norm) / len(table)
-        
-        # Return a combined fitness value (lower is better)
-        return end_to_start + a * norm
+
+        # Dynamic normalization to balance values
+        max_distance = 10  # Estimated max distance
+        max_norm = 5        # Estimated max angle deviation
+        end_to_start /= max_distance
+        norm /= max_norm
+
+        # Adaptive weight adjustment
+        a = 0.2 + (end_to_start ** 2) * 0.5
+
+        # Rotation penalty to prevent unrealistic solutions
+        rotation_penalty = sum(abs(ind_table[key][0]) + abs(ind_table[key][1]) + abs(ind_table[key][2]) for key in ind_table)
+        rotation_penalty /= (3 * len(table))  # Normalization
+
+        return (end_to_start + a * norm + 0.05 * rotation_penalty,distance)
 
     def save_solution(self, filename='optimized_table.json'):
         """Save the best solution to a file."""
