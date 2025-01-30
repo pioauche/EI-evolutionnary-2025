@@ -3,9 +3,9 @@ import json
 import copy
 import os
 from abc import ABC, abstractmethod
-from .Traj3D import Traj3D
-from .RotTable import RotTable
-from .Individual import Individual
+from Traj3D import Traj3D
+from RotTable import RotTable
+from Individual import Individual
 
 class Optimizer(ABC):
     def __init__(self, generations=100, population_size=50, mutation_rate=0.1):

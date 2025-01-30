@@ -3,15 +3,16 @@ import json
 import random
 import copy
 import os
-from .Traj3D import Traj3D
-from .RotTable import RotTable
-from .Individual import Individual
-from .Optimizer import Optimizer
+from Traj3D import Traj3D
+from RotTable import RotTable
+from Individual import Individual
+from Optimizer import Optimizer
 
 class GeneticOptimizer(Optimizer):
     def __init__(self, generations=100, population_size=50, mutation_rate=0.1):
         # Initialize the genetic optimizer with population size and mutation rate
         super().__init__(generations, population_size, mutation_rate)
+        self.load_table()  # Load the reference table
 
     def create_individual(self):
         """Create a new individual with random mutations."""
@@ -28,27 +29,24 @@ class GeneticOptimizer(Optimizer):
 
     def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2):
         """Create a child individual by combining two parents."""
-        if test==True:
-            child = copy.deepcopy(parent1)
-        else:
-            child = copy.deepcopy(parent1)  # Start with a copy of the first parent
-            child.setCalculated(False)  # Mark as not calculated
-            table = child.getTable()  # Access the child's rotation table
-            crossover_model = self.__generate_random_tuple(crossover_type-1, self.pair)  # Generate crossover points
-            dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
-            
-            index = 0
-            for i, e in enumerate(crossover_model):
-                if np.random.random() < 0.5:
-                    # Swap segments between parents based on crossover model
-                    while index < e:
-                        dinucleotide = dinucleotides[index]
-                        table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
-                        index += 1
-                index = e  # Update index for the next segment
-            child.setTable(table)  # Update the child's table
-            
-        return child  # Apply mutation to the child
+        child = copy.deepcopy(parent1)  # Start with a copy of the first parent
+        child.setCalculated(False)  # Mark as not calculated
+        table = child.getTable()  # Access the child's rotation table
+        crossover_model = self.__generate_random_tuple(crossover_type-1, self.pair)  # Generate crossover points
+        dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
+        
+        index = 0
+        for i, e in enumerate(crossover_model):
+            if np.random.random() < 0.5:
+                # Swap segments between parents based on crossover model
+                while index < e:
+                    dinucleotide = dinucleotides[index]
+                    table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
+                    index += 1
+            index = e  # Update index for the next segment
+        child.setTable(table)  # Update the child's table
+        
+        return child
 
     def mutate(self, individual: Individual):
         """Apply random mutations to an individual."""
