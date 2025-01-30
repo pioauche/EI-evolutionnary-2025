@@ -154,21 +154,22 @@ class GeneticOptimizer(Optimizer):
                         break  # Exit the loop once a parent is selected
 
         elif type_choosing_parent == "best":
-            # Select the best individuals as parents
+            # Select the  b best individuals as parents
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:int(b*self.getPopulationSize())]
-        if gen >10  and np.random.random() < 0.15:
-            for i in range(len(parents) // 4):  # Remplace 25% de la population
+        if gen >10  and np.random.random() < 0.15:#if the algorithm is stuck in a local minimum, we add new individuals to the population with a probability of 15%
+            for i in range(len(parents) // 4):   #we replace 25% of the population by new individuals to ensure diversity
                 population[len(parents)-i] = self.create_individual()
         child=copy.deepcopy(parents)
 
 
         if type_matching == "random":
             while len(child)<self.getPopulationSize():
+                #we select two parents randomly
                 parent1 = parents[np.random.randint(0,len(parents))]
                 parent2 = parents[np.random.randint(0,len(parents))]
-                while parent1 == parent2:
+                while parent1 == parent2:#we ensure that the two parents are different
                     parent2 = parents[np.random.randint(0, len(parents))]
                 child.append(self.crossover(parent1, parent2))
 
@@ -176,9 +177,10 @@ class GeneticOptimizer(Optimizer):
             # Tournament selection
             while len(child)<self.getPopulationSize():
                 tournament_size = 3
+                #we select two parents by a tournament-based selection
                 parent1 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
-                while parent1 == parent2:
+                while parent1 == parent2:#we ensure that the two parents are different
                     parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 child.append(self.crossover(parent1, parent2))
         elif type_matching == "meritocratie":#we make  the better ones have more children (a test that we made that seems interesting)
@@ -188,7 +190,7 @@ class GeneticOptimizer(Optimizer):
                     child1 = self.crossover(parents[i], parents[j])
                     self.mutate(child1)
                     child.append(child1)
-                    if len(child) >= self.getPopulationSize():
+                    if len(child) >= self.getPopulationSize():#we stop if we have the right number of population
                         break
 
                     
