@@ -1,6 +1,5 @@
 import numpy as np
 import json
-import random
 import copy
 import os
 from Traj3D import Traj3D
@@ -9,61 +8,60 @@ from Individual import Individual
 from Optimizer import Optimizer
 
 class GeneticOptimizer(Optimizer):
+    """Genetic optimizer for DNA structural circularity. Subclass of Optimizer. Uses a genetic algorithm to optimize the rotation table."""
+
     def __init__(self, generations=100, population_size=50, mutation_rate=0.1):
-        # Initialize the genetic optimizer with population size and mutation rate
+        """Initialize the genetic optimizer with population size and mutation rate. Uses the constructor of the parent class."""
+
         super().__init__(generations, population_size, mutation_rate)
         self.load_table()  # Load the reference table
 
     def create_individual(self):
         """Create a new individual with random mutations."""
-        individu = Individual()
-        table = individu.getTable()  # Get the individual's rotation table
+
+        individual = Individual()       # Create a new individual, instance of the Individual class
+        table = individual.getTable()   # Get the individual's rotation table
         
         # Apply random mutations to all parameters of the individual's table
         for dinucleotide in table:
             dinu = table[dinucleotide]
-            individu.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))#we stay in the born given by the reference individual
-            individu.setWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))
-            individu.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))
-        return individu
+            individual.setTwist(dinucleotide, np.random.uniform(dinu[0]-dinu[3], dinu[0]+dinu[3]))      # Random twist. Makes sure the value is within the bounds
+            individual.setWedge(dinucleotide, np.random.uniform(dinu[1]-dinu[4], dinu[1]+dinu[4]))      # Random wedge. Makes sure the value is within the bounds
+            individual.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))  # Random direction. Makes sure the value is within the bounds
+        return individual
 
-    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=2,test=False):
+    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=1):
         """Create a child individual by combining two parents."""
+
         child = copy.deepcopy(parent1)  # Start with a copy of the first parent
-        child.setCalculated(False)  # Mark as not calculated (the children's fitness has never been calculated)
+        child.setCalculated(False)  # Mark as not calculated
         table = child.getTable()  # Access the child's rotation table
+        crossover_model = self.__generate_random_list(crossover_type, self.pair)  # Generate crossover points
+        dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
+        
+        parent_index = np.random.randint(1,3)  # Randomly select the first parent to start with
 
-        if test==True:
-            parent2_table = parent2.getTable()  # Access parent2's table
-            dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
+        i = 0
+        for e in crossover_model:
+            if parent_index == 2:
+                while i < e:
+                    dinucleotide = dinucleotides[i]
+                    table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
+                    i += 1
+                parent_index = 1
+            else:
+                parent_index = 2
+            i = e  # Update index for the next segment
 
-            # Uniform crossover: for each key, randomly choose from parent1 or parent2
-            for dinucleotide in dinucleotides:
-                alpha = np.random.random()  # Alpha entre 0 et 1
-                for i in range(3):
-                    #we take a children which is on the 'line' between the two parents (alpha*parent1+(1-alpha)*parent2)
-                    table[dinucleotide][i] = alpha * parent1.getTable()[dinucleotide][i] + (1 - alpha) * parent2_table[dinucleotide][i]            
-            child.setTable(table)  # Update the child's table
-        else:
-            crossover_model = self.__generate_random_tuple(crossover_type-1, self.getPair())  # Generate crossover points
-            dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
-            
-            index = 0
-            for i, e in enumerate(crossover_model):
-                if np.random.random() < 0.5:
-                    # Swap segments between parents based on crossover model
-                    while index < e:
-                        dinucleotide = dinucleotides[index]
-                        table[dinucleotide] = copy.deepcopy(parent2.getTable()[dinucleotide])
-                        index += 1
-                index = e  # Update index for the next segment
-            child.setTable(table)  # Update the child's table
+        child.setTable(table)  # Update the child's table
             
         return child  # Apply mutation to the child
 
     def mutate(self, individual: Individual):
-        """Apply random mutations to an individual."""
+        """Apply random mutations to an individual. Returns the mutated individual."""
+
         table = self.getIndRef().getTable()  # Get the individual's rotation table
+
         for dinucleotide in table:
             dinu = table[dinucleotide]
             if np.random.random() < self.getMutationRate():#we mutate the twist, wedge and direction of the dinucleotide with a probability of mutation_rate
@@ -75,7 +73,7 @@ class GeneticOptimizer(Optimizer):
         
         return individual  # Return the mutated individual
 
-    def create_new_gen(self, population,gen, type_choosing_parent="best", type_matching="random", crossover_type=2,):
+    def create_new_gen(self, population, gen, type_choosing_parent="best", type_matching="random", crossover_type=1,):
         """Create a new generation of individuals based on the current population"""
         b=0.25 #proportion of the population that will be parents 
         if type_choosing_parent == "tournoi":#we choose the parents with a tournament
@@ -187,8 +185,9 @@ class GeneticOptimizer(Optimizer):
             ind = self.mutate(ind)
         return child  # Return the new generation
 
-    def optimize(self, sequence: str, generations=100):
-        """Run the genetic algorithm."""
+    def optimize(self, sequence: str):
+        """Run the genetic algorithm. Returns the best solution found."""
+
         # Initialize population with random individuals
         population = []
         population.append(Individual())#we add the reference individual
@@ -197,7 +196,7 @@ class GeneticOptimizer(Optimizer):
 
         generations_without_improvement = 0  # Track stagnation in progress
 
-        for gen in range(generations):
+        for gen in range(self.generations):
             # Evaluate fitness for each individual
             current_best_fitness = float('inf')
             best_individual = None
@@ -239,20 +238,15 @@ class GeneticOptimizer(Optimizer):
 
         return self.getBestSolution()  # Return the best solution found
 
+    def __generate_random_list(self, n:int, N:int):
+        """Generate a random list of indexes for crossover of two parents. """
+
     def __generate_random_tuple(self, n, N):
         """Generate a list of indexes for crossover of two parents."""
-        if n > N:
+
+        if n > N-1:
             raise ValueError(f"n must be less than or equal to {N-1}")
-        random_numbers = np.random.choice(np.arange(1, N-1), n, replace=False)  # Select unique random indices
+        random_numbers = np.random.choice(np.arange(1, N), n, replace=False)  # Select unique random indices
         random_numbers.sort()  # Sort indices in ascending order
         random_numbers = list(random_numbers)
-        return random_numbers + [N] if random_numbers[-1] != N else random_numbers
-    
-
-
-
-
-
-
-
-    
+        return random_numbers + [np.int64(N)]
