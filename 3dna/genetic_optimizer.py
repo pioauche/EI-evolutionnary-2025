@@ -148,38 +148,39 @@ class GeneticOptimizer(Optimizer):
 
 
         elif type_choosing_parent == "best":
-            # Select the best individuals as parents
+            # Select the  b best individuals as parents
             parents = copy.deepcopy(population)
             parents.sort(key=lambda x: x.getFitness())
             parents = parents[:int(b*self.getPopulationSize())]
-        if gen >10  and np.random.random() < 0.15:
-            for i in range(len(parents) // 4):  # Remplace 25% de la population
+        if gen >10  and np.random.random() < 0.15:#if the algorithm is stuck in a local minimum, we add new individuals to the population with a probability of 15%
+            for i in range(len(parents) // 4):   #we replace 25% of the population by new individuals to ensure diversity
                 population[len(parents)-i] = self.create_individual()
         child=copy.deepcopy(parents)
 
         if type_matching == "random":
             while len(child)<self.getPopulationSize():
+                #we select two parents randomly
                 parent1 = parents[np.random.randint(0,len(parents))]
                 parent2 = parents[np.random.randint(0,len(parents))]
-                while parent1 == parent2:
+                while parent1 == parent2:#we ensure that the two parents are different
                     parent2 = parents[np.random.randint(0, len(parents))]
                 child.append(self.crossover(parent1, parent2, crossover_type))
         elif type_matching == "tournament":
             # Tournament selection
             while len(child)<self.getPopulationSize():
                 tournament_size = 3
+                #we select two parents by a tournament-based selection
                 parent1 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
-                while parent1 == parent2:
+                while parent1 == parent2:#we ensure that the two parents are different
                     parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
-                child.append(self.crossover(parent1, parent2, crossover_type))
+                child.append(self.crossover(parent1, parent2, crossover_type))#we create a child by crossing the two parents
         elif type_matching == "meritocratie":#we make  the better ones have more children (a test that we made that seems interesting)
             for i in range(len(parents)):
                 for j in range(i + 1, len(parents)):
-                    child1 = self.crossover(parents[i], parents[j], crossover_type)
-                    self.mutate(child1)
+                    child1 = self.crossover(parents[i], parents[j], crossover_type)#we create a child by crossing the two parents
                     child.append(child1)
-                    if len(child) >= self.getPopulationSize():
+                    if len(child) >= self.getPopulationSize():#we stop if we have the right number of population
                         break
         if len(child) > self.getPopulationSize():#we remove if we have more than the population size (it can happen if we have an odd number of parents)
             child.pop()
