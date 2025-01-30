@@ -2,19 +2,23 @@ import numpy as np
 import json
 import copy
 import os
-from Traj3D import Traj3D
-from RotTable import RotTable
-from Individual import Individual
-from Optimizer import Optimizer
+from .Traj3D import Traj3D
+from .RotTable import RotTable
+from .Individual import Individual
+from .Optimizer import Optimizer
 
 class GeneticOptimizer(Optimizer):
     """Genetic optimizer for DNA structural circularity. Subclass of Optimizer. Uses a genetic algorithm to optimize the rotation table."""
 
-    def __init__(self, generations=100, population_size=50, mutation_rate=0.1):
+    def __init__(self, generations=100, population_size=50, mutation_rate=0.1, crossover_type=1):
         """Initialize the genetic optimizer with population size and mutation rate. Uses the constructor of the parent class."""
 
         super().__init__(generations, population_size, mutation_rate)
+        self.__crossover_type = crossover_type  # Type of crossover to use
         self.load_table()  # Load the reference table
+
+    def getCrossoverType(self) -> int:
+        return self.__crossover_type
 
     def create_individual(self):
         """Create a new individual with random mutations."""
@@ -30,13 +34,16 @@ class GeneticOptimizer(Optimizer):
             individual.setDirection(dinucleotide, np.random.uniform(dinu[2]-dinu[5], dinu[2]+dinu[5]))  # Random direction. Makes sure the value is within the bounds
         return individual
 
-    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=1):
+    def crossover(self, parent1: Individual, parent2: Individual, crossover_type=None):
         """Create a child individual by combining two parents."""
+
+        if crossover_type is None:
+            crossover_type = self.getCrossoverType()
 
         child = copy.deepcopy(parent1)  # Start with a copy of the first parent
         child.setCalculated(False)  # Mark as not calculated
         table = child.getTable()  # Access the child's rotation table
-        crossover_model = self.__generate_random_list(crossover_type, self.pair)  # Generate crossover points
+        crossover_model = self.__generate_random_list(crossover_type, self.getPair())  # Generate crossover points
         dinucleotides = list(table.keys())  # List of dinucleotide keys in the table
         
         parent_index = np.random.randint(1,3)  # Randomly select the first parent to start with
@@ -73,9 +80,11 @@ class GeneticOptimizer(Optimizer):
         
         return individual  # Return the mutated individual
 
-    def create_new_gen(self, population, gen, type_choosing_parent="best", type_matching="random", crossover_type=1,):
+    def create_new_gen(self, population, gen, type_choosing_parent="best", type_matching="random"):
         """Create a new generation of individuals based on the current population"""
-        b=0.25 #proportion of the population that will be parents 
+
+        b=0.25 #proportion of the population that will be parents
+
         if type_choosing_parent == "tournoi":#we choose the parents with a tournament
             parents=[]
             populationbis = copy.deepcopy(population)
@@ -84,6 +93,7 @@ class GeneticOptimizer(Optimizer):
                 parent = min(np.random.choice(populationbis, tournament_size), key=lambda x: x.getFitness())#we choose randomly two individuals and we keep the best one
                 populationbis.remove(parent)#we remove the best (to avoid having the same parent twice)
                 parents.append(parent)#we add the best to the parents
+
         elif type_choosing_parent == "selection par rang":  # Rank-based selection of parents
             parents = []  
             # Step 1: Sort the population based on fitness (ascending order)
@@ -112,7 +122,6 @@ class GeneticOptimizer(Optimizer):
                         parents.append(population[i])  # Add the selected parent to the list
                         poids_temp[i] = 0  # Set its weight to zero to prevent reselection
                         break  # Exit the loop once a parent is selected
-
 
         elif type_choosing_parent == "selection par roulette":  # Roulette wheel selection
             parents = []  
@@ -144,7 +153,6 @@ class GeneticOptimizer(Optimizer):
                         poids_temp[i] = 0  # Set its weight to zero to prevent reselection
                         break  # Exit the loop once a parent is selected
 
-
         elif type_choosing_parent == "best":
             # Select the best individuals as parents
             parents = copy.deepcopy(population)
@@ -155,13 +163,15 @@ class GeneticOptimizer(Optimizer):
                 population[len(parents)-i] = self.create_individual()
         child=copy.deepcopy(parents)
 
+
         if type_matching == "random":
             while len(child)<self.getPopulationSize():
                 parent1 = parents[np.random.randint(0,len(parents))]
                 parent2 = parents[np.random.randint(0,len(parents))]
                 while parent1 == parent2:
                     parent2 = parents[np.random.randint(0, len(parents))]
-                child.append(self.crossover(parent1, parent2, crossover_type))
+                child.append(self.crossover(parent1, parent2))
+
         elif type_matching == "tournament":
             # Tournament selection
             while len(child)<self.getPopulationSize():
@@ -170,15 +180,18 @@ class GeneticOptimizer(Optimizer):
                 parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
                 while parent1 == parent2:
                     parent2 = min(np.random.choice(population, tournament_size), key=lambda x: x.getFitness())
-                child.append(self.crossover(parent1, parent2, crossover_type))
+                child.append(self.crossover(parent1, parent2))
         elif type_matching == "meritocratie":#we make  the better ones have more children (a test that we made that seems interesting)
+
             for i in range(len(parents)):
                 for j in range(i + 1, len(parents)):
-                    child1 = self.crossover(parents[i], parents[j], crossover_type)
+                    child1 = self.crossover(parents[i], parents[j])
                     self.mutate(child1)
                     child.append(child1)
                     if len(child) >= self.getPopulationSize():
                         break
+
+                    
         if len(child) > self.getPopulationSize():#we remove if we have more than the population size (it can happen if we have an odd number of parents)
             child.pop()
         for ind in child[int(0.1*self.getPopulationSize()):]:#we allow 90% worst individuals to mutate
@@ -196,7 +209,7 @@ class GeneticOptimizer(Optimizer):
 
         generations_without_improvement = 0  # Track stagnation in progress
 
-        for gen in range(self.generations):
+        for gen in range(self.getGenerations()):
             # Evaluate fitness for each individual
             current_best_fitness = float('inf')
             best_individual = None
@@ -234,15 +247,12 @@ class GeneticOptimizer(Optimizer):
                 break
 
             # Create the next generation
-            population = self.create_new_gen(population,type_choosing_parent="best",type_matching="random",crossover_type=2,gen=generations_without_improvement)
+            population = self.create_new_gen(population, type_choosing_parent="best", type_matching="random", gen=generations_without_improvement)
 
         return self.getBestSolution()  # Return the best solution found
 
     def __generate_random_list(self, n:int, N:int):
         """Generate a random list of indexes for crossover of two parents. """
-
-    def __generate_random_tuple(self, n, N):
-        """Generate a list of indexes for crossover of two parents."""
 
         if n > N-1:
             raise ValueError(f"n must be less than or equal to {N-1}")

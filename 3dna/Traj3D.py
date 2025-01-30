@@ -4,8 +4,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from RotTable import RotTable
-
+from .RotTable import RotTable
 
 class Traj3D:
     """Represents a 3D trajectory. Contains the 3D coordinates of the DNA molecule."""
@@ -18,11 +17,12 @@ class Traj3D:
         [0, 0, 0, 1]]
     )
 
-    def __init__(self):
+    def __init__(self, algorithm_type: str='no'):
         plt.close('all')
         self.__Traj3D = {}
         self.fig = plt.figure('Molécule d\'ADN')
         self.ax = plt.axes(projection='3d')
+        self.algorithm_type = algorithm_type
 
     def getTraj(self) -> dict:
         return self.__Traj3D
@@ -106,6 +106,7 @@ class Traj3D:
         self.ax.plot(x,y,z)
         self.ax.scatter(xyz[0][0],xyz[0][1],xyz[0][2],color='red',s=100)
         self.ax.scatter(xyz[-1][0],xyz[-1][1],xyz[-1][2],color='green',s=100)
+        plt.title(f"Trajectory of DNA molecule using {self.algorithm_type} algorithm")
         plt.show()
 
     def write(self, filename: str):

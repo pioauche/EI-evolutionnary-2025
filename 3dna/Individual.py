@@ -1,4 +1,4 @@
-from RotTable import RotTable
+from .RotTable import RotTable
 
 class Individual(RotTable):
     def __init__(self, filename: str=None):

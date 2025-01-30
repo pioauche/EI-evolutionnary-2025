@@ -3,9 +3,9 @@ import json
 import copy
 import os
 from abc import ABC, abstractmethod
-from Traj3D import Traj3D
-from RotTable import RotTable
-from Individual import Individual
+from .Traj3D import Traj3D
+from .RotTable import RotTable
+from .Individual import Individual
 
 class Optimizer(ABC):
     """Abstract base class for optimization algorithms. Subclasses must implement the optimize and mutate methods."""
@@ -15,7 +15,7 @@ class Optimizer(ABC):
         self.__population_size = population_size      # Number of individuals in the population
         self.__mutation_rate = mutation_rate          # Probability of mutation per parameter
         self.__trajectoire = Traj3D()                 # Instance of Traj3D for trajectory calculations
-        self.__pair = 16                              # Number of dinucleotide pairs for crossover
+        self.__pair = 16                              # Number of dinucleotide pairs for crossover (genes of the individuals)
         self.__best_solution = None                   # Store the best solution found
         self.__best_fitness = float('inf')            # Keep track of the best fitness score
 
