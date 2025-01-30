@@ -9,14 +9,42 @@ from .Individual import Individual
 
 class Optimizer(ABC):
     def __init__(self, generations=100, population_size=50, mutation_rate=0.1):
-        self.generations = generations              # Number of generations
-        self.population_size = population_size      # Number of individuals in the population
-        self.mutation_rate = mutation_rate          # Probability of mutation per parameter
-        self.trajectoire = Traj3D()                 # Instance of Traj3D for trajectory calculations
-        self.pair = 16                              # Number of dinucleotide pairs for crossover
-        self.best_solution = None                   # Store the best solution found
-        self.best_fitness = float('inf')            # Keep track of the best fitness score
+        self.__generations = generations              # Number of generations
+        self.__population_size = population_size      # Number of individuals in the population
+        self.__mutation_rate = mutation_rate          # Probability of mutation per parameter
+        self.__trajectoire = Traj3D()                 # Instance of Traj3D for trajectory calculations
+        self.__pair = 16                              # Number of dinucleotide pairs for crossover
+        self.__best_solution = None                   # Store the best solution found
+        self.__best_fitness = float('inf')            # Keep track of the best fitness score
+    ###################
+    # WRITING METHODS #
+    ###################
+    def setMutationRate(self, mutation_rate: float):
+        self.__mutation_rate = mutation_rate
+    def setBestSolution(self, best_solution: Individual):
+        self.__best_solution = best_solution
+    def setBestFitness(self, best_fitness: float):
+        self.__best_fitness = best_fitness
 
+   ###################
+    # READING METHODS #
+    ###################
+    def getGenerations(self) -> int:
+        return self.__generations
+    def getPopulationSize(self) -> int:
+        return self.__population_size
+    def getMutationRate(self) -> float:
+        return self.__mutation_rate
+    def getBestSolution(self) -> Individual:
+        return self.__best_solution
+    def getBestFitness(self) -> float:
+        return self.__best_fitness
+    def getPair(self) -> int:
+        return self.__pair
+    def getTrajectoire(self) -> Traj3D:
+        return self.__trajectoire
+    def getIndRef(self) -> Individual:
+        return self.__ind_ref
     def load_table(self, filename="table.json"):
         # Load the initial table from a JSON file
         current_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory of the script
@@ -24,20 +52,20 @@ class Optimizer(ABC):
         
         try:
             # Create a RotTable instance from the loaded file
-            self.ind_ref = Individual(table_path)
+            self.__ind_ref = Individual(table_path)
             print(f"Successfully loaded table from: {table_path}")
         except FileNotFoundError:
             raise FileNotFoundError(f"Could not find {filename} at {table_path}")
         
     def calculate_fitness(self, ind, sequence: str):
         """Calculate the fitness function with normalizations and penalties."""
-        a = 0.2  # Initial weight for angle deviation
+        a = 0.2 # Initial weight for angle deviation
         rot_table = RotTable()
         table = rot_table.getTable()
         ind_table = ind.getTable()
 
-        self.trajectoire.compute(sequence, ind)
-        start, end = self.trajectoire.getTraj()[0], self.trajectoire.getTraj()[-1]
+        self.__trajectoire.compute(sequence, ind)
+        start, end = self.__trajectoire.getTraj()[0], self.__trajectoire.getTraj()[-1]
         end_to_start = np.linalg.norm(end - start)
         distance = end_to_start
         # Compute deviation from tabulated angles
@@ -49,7 +77,7 @@ class Optimizer(ABC):
         )
         norm = np.sqrt(norm) / len(table)
 
-        # Dynamic normalization to balance values
+        """# Dynamic normalization to balance values
         max_distance = 10  # Estimated max distance
         max_norm = 5        # Estimated max angle deviation
         end_to_start /= max_distance
@@ -61,16 +89,16 @@ class Optimizer(ABC):
         # Rotation penalty to prevent unrealistic solutions
         rotation_penalty = sum(abs(ind_table[key][0]) + abs(ind_table[key][1]) + abs(ind_table[key][2]) for key in ind_table)
         rotation_penalty /= (3 * len(table))  # Normalization
-
-        return (end_to_start + a * norm + 0.05 * rotation_penalty,distance)
+"""
+        return (end_to_start + a * norm,distance)
 
     def save_solution(self, filename='optimized_table.json'):
         """Save the best solution to a file."""
-        if self.best_solution:
+        if self.__best_solution:
             # Save the table from the RotTable instance
             with open(filename, 'w') as f:
                 json.dump(
-                    self.best_solution.getTable(), 
+                    self.__best_solution.getTable(), 
                     f, 
                     indent=4,  # Pretty-print the JSON
                     default=lambda o: o.__dict__,

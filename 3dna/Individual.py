@@ -5,7 +5,7 @@ class Individual(RotTable):
         super().__init__(filename)
         self.__fitness = 0
         self.__calculated=False
-        self.__pair= 16
+        self.__distance=10000
         
     def setFitness(self, fitness: float):
         self.__fitness = fitness
@@ -21,3 +21,7 @@ class Individual(RotTable):
         return self.__calculated
     def calculate(self,b):
         self.__calculated=b
+    def getDistance(self):
+        return self.__distance
+    def setDistance(self,distance):
+        self.__distance=distance
