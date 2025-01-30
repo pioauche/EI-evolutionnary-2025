@@ -3,15 +3,16 @@ import json
 import random
 import copy
 import os
-from .Traj3D import Traj3D
-from .RotTable import RotTable
-from .Individual import Individual
-from .Optimizer import Optimizer
+from Traj3D import Traj3D
+from RotTable import RotTable
+from Individual import Individual
+from Optimizer import Optimizer
 
 class GeneticOptimizer(Optimizer):
     def __init__(self, generations=100, population_size=50, mutation_rate=0.1):
         # Initialize the genetic optimizer with population size and mutation rate
         super().__init__(generations, population_size, mutation_rate)
+        self.load_table()  # Load the reference table
 
     def create_individual(self):
         """Create a new individual with random mutations."""
