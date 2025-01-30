@@ -8,7 +8,11 @@ from .RotTable import RotTable
 from .Individual import Individual
 
 class Optimizer(ABC):
+    """Abstract base class for optimization algorithms. Subclasses must implement the optimize and mutate methods."""
+
     def __init__(self, generations=100, population_size=50, mutation_rate=0.1):
+        """Initialize the optimizer with the given parameters."""
+        
         self.generations = generations              # Number of generations
         self.population_size = population_size      # Number of individuals in the population
         self.mutation_rate = mutation_rate          # Probability of mutation per parameter
@@ -17,10 +21,11 @@ class Optimizer(ABC):
         self.best_solution = None                   # Store the best solution found
         self.best_fitness = float('inf')            # Keep track of the best fitness score
 
-    def load_table(self, filename="optimized_table1.json"):
-        # Load the initial table from a JSON file
-        current_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory of the script
-        table_path = os.path.join(current_dir, filename)  # Full path to the table file
+    def load_table(self, filename="table.json"):
+        """Load the initial table from a JSON file"""
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))    # Current directory of the script
+        table_path = os.path.join(current_dir, filename)            # Full path to the table file
         
         try:
             # Create a RotTable instance from the loaded file
@@ -30,11 +35,12 @@ class Optimizer(ABC):
             raise FileNotFoundError(f"Could not find {filename} at {table_path}")
         
     def calculate_fitness(self, ind: Individual, dna_sequence: str):
-        """Calculate the fitness of an individual based on structural circularity."""
-        a = 0.2  # Weight factor for deviation from tabulated angles
-        rot_table = RotTable()  # Load the reference rotation table
-        table = rot_table.getTable()  # Get the reference table data
-        ind_table = ind.getTable()  # Get the individual's table data
+        """Calculate the fitness of an individual based on structural circularity. Lower is better."""
+
+        a = 0.2                         # Weight factor for deviation from tabulated angles
+        rot_table = RotTable()          # Load the reference rotation table
+        table = rot_table.getTable()    # Get the reference table data
+        ind_table = ind.getTable()      # Get the individual's table data
         
         self.trajectoire.compute(dna_sequence, ind)  # Compute the 3D trajectory based on the individual
         
@@ -60,6 +66,7 @@ class Optimizer(ABC):
 
     def save_solution(self, filename='table.json'):
         """Save the best solution to a file."""
+
         if self.best_solution:
             # Save the table from the RotTable instance
             with open(filename, 'w') as f:
@@ -72,9 +79,9 @@ class Optimizer(ABC):
                 )
 
     @abstractmethod
-    def optimize(self, dna_sequence: str):
+    def optimize(self, dna_sequence: str): # -> Individual - Returns the best solution found
         pass
 
     @abstractmethod
-    def mutate(self, ind: Individual):
+    def mutate(self, ind: Individual): # -> Individual - Returns the mutated individual
         pass

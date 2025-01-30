@@ -19,5 +19,6 @@ class Individual(RotTable):
 
     def isCalculated(self):
         return self.__calculated
+        
     def calculate(self,b):
         self.__calculated=b

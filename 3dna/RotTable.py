@@ -4,7 +4,7 @@ from os import path as os_path
 here = os_path.abspath(os_path.dirname(__file__))
 
 class RotTable:
-    """Represents a rotation table"""
+    """Represents a rotation table. Contains the twist, wedge, and direction values for each dinucleotide."""
 
     # 3 first values: 3 angle values
     # 3 last values: SD values
