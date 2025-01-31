@@ -3,7 +3,8 @@
 ## Description  
 Ce projet implémente deux algorithmes d'optimisation :
 - **Recuit simulé**  
-- **Algorithme génétique**  
+- **Algorithme génétique**
+
 Le but est d'ajuster les rotations de nucléotides afin de rendre une séquence d’ADN circulaire.
 
 ---
@@ -25,7 +26,7 @@ python -m 3dna data/plasmid_8k.fasta --genetic --annealing --generations 200 --p
 
 **Options disponibles**
 
-    --genetic : Active l’algorithme génétique.
+--genetic : Active l’algorithme génétique.
     --annealing : Active le recuit simulé.
     --generations <int> : Nombre de générations (défaut: 100).
     --population <int> : Taille de la population (défaut: 50).
