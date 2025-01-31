@@ -26,8 +26,8 @@ python -m 3dna data/plasmid_8k.fasta --genetic --annealing --generations 200 --p
 
 **Options disponibles**
 
---genetic : Active l’algorithme génétique.
-    --annealing : Active le recuit simulé.
+- --genetic : Active l’algorithme génétique.
+- --annealing : Active le recuit simulé.
     --generations <int> : Nombre de générations (défaut: 100).
     --population <int> : Taille de la population (défaut: 50).
     --mutation_rate <float> : Probabilité de mutation par gène (ex: 0.1).
