@@ -26,6 +26,7 @@ python -m 3dna data/plasmid_8k.fasta --genetic --annealing --generations 200 --p
 
 **Options disponibles**
 
+- <code>data/plasmid_8k.fasta</code> : Fichier dans lequel est stocké la séquence ADN à traiter
 - <code>--genetic</code> : Active l’algorithme génétique.
 - <code>--annealing</code> : Active le recuit simulé.
 - <code>--generations <int></code> : Nombre de générations (défaut: 100).
