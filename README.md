@@ -2,8 +2,8 @@
 
 ## Description  
 Ce projet implémente deux algorithmes d'optimisation :  
-✅ **Recuit simulé**  
-✅ **Algorithme génétique**  
+    **Recuit simulé**  
+    **Algorithme génétique**  
 Le but est d'ajuster les rotations de nucléotides afin de rendre une séquence d’ADN circulaire.
 
 ---
@@ -13,12 +13,15 @@ Installez les dépendances requises (**numpy** et **matplotlib**) avec :
 
 ```bash
 pip install -r requirements.txt
+```
 
 Utilisation
 
 Lancez le programme avec :
 
+```
 python -m 3dna data/plasmid_8k.fasta --genetic --annealing --generations 200 --population 100 --mutation_rate 0.1
+```
 
 Options disponibles
 
@@ -30,7 +33,9 @@ Options disponibles
 
 Affichez l’aide avec :
 
+```
 python -m 3dna --help
+```
 
 Exemple de résultat
 
