@@ -2,9 +2,8 @@
 
 ## Description  
 Ce projet implémente deux algorithmes d'optimisation :
-
-    - **Recuit simulé**  
-    - **Algorithme génétique**  
+        - **Recuit simulé**  
+        - **Algorithme génétique**  
 Le but est d'ajuster les rotations de nucléotides afin de rendre une séquence d’ADN circulaire.
 
 ---
